@@ -1,0 +1,13 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Mobile and web clients use the authenticated Express API for all data.
+    // Firebase Admin SDK access from the API is not governed by these rules.
+    // Keep direct client access closed until a specific read-only use case is
+    // designed and reviewed.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

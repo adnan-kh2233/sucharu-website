@@ -1,0 +1,17 @@
+require("dotenv").config({quiet:true});
+const bcrypt=require("bcryptjs");const {emailId,put}=require("../config/store");const {getFirestoreDb}=require("../config/firebase");
+const seedServices=[
+ {name:"Home Cleaning",slug:"home-cleaning",category:"Cleaning",icon:"🧹",description:"Starting estimate for a small home. Final price depends on size and scope.",pricingModel:"fixed",startingPrice:1500},
+ {name:"Bathroom Cleaning",slug:"bathroom-cleaning",category:"Cleaning",icon:"🧽",description:"Starting estimate for one bathroom. Final scope confirmed before service.",pricingModel:"fixed",startingPrice:1000},
+ {name:"AC Servicing",slug:"ac-servicing",category:"AC Services",icon:"❄️",description:"Starting estimate for standard servicing. Parts and repair work cost extra with approval.",pricingModel:"fixed",startingPrice:1000},
+ {name:"Electrical Repair",slug:"electrical-repair",category:"Electrical Services",icon:"💡",description:"Starting visit/inspection estimate. Materials and repair scope confirmed first.",pricingModel:"fixed",startingPrice:500},
+ {name:"Plumbing Repair",slug:"plumbing-repair",category:"Plumbing",icon:"🔧",description:"Starting visit/inspection estimate. Parts and repair scope confirmed first.",pricingModel:"fixed",startingPrice:500},
+ {name:"Pest Control Consultation",slug:"pest-control-consultation",category:"Pest Control",icon:"🛡️",description:"Request a pest control assessment and treatment recommendation.",pricingModel:"fixed",startingPrice:1000},
+ {name:"Home Shifting Consultation",slug:"home-shifting-consultation",category:"Moving and Shifting",icon:"📦",description:"Request a moving estimate. Price requires details and confirmation.",pricingModel:"quote",startingPrice:null}
+];
+function assertAdminConfig(){const secret=process.env.JWT_SECRET||"",email=String(process.env.ADMIN_EMAIL||"").trim().toLowerCase(),password=String(process.env.ADMIN_PASSWORD||"");if(secret.length<32||/change|replace|example|placeholder|your[_ -]?secret/i.test(secret))throw Error("Set a unique JWT_SECRET of at least 32 characters in backend/.env.");if(!/^\S+@\S+\.\S+$/.test(email))throw Error("Set ADMIN_EMAIL to an email address in backend/.env.");if(password.length<14||!/[a-z]/.test(password)||!/[A-Z]/.test(password)||!/[0-9]/.test(password)||!/[^A-Za-z0-9]/.test(password)||/changeme|password|example|replace/i.test(password))throw Error("Set a unique ADMIN_PASSWORD of at least 14 characters with upper/lowercase letters, a number and a symbol.");}
+async function seed(){assertAdminConfig();await getFirestoreDb().collection("_health").doc("ping").get();const email=process.env.ADMIN_EMAIL.trim().toLowerCase(),id=emailId(email),db=getFirestoreDb(),adminRef=db.collection("admins").doc(id),snap=await adminRef.get();if(!snap.exists)await put("admins",id,{email,passwordHash:await bcrypt.hash(process.env.ADMIN_PASSWORD,12),name:"Sucharu Admin",role:"admin",active:true});
+ for(const service of seedServices){const ref=db.collection("services").doc(service.slug),existing=await ref.get();if(!existing.exists)await put("services",service.slug,{...service,active:true,workerPayment:null,serviceAreas:[]});}
+ console.log(`Seeded Firebase admin ${email} and ${seedServices.length} initial editable services.`);}
+if(require.main===module)seed().catch(error=>{console.error(`Seed failed: ${error.message}`);process.exit(1);});
+module.exports={seedServices,assertAdminConfig};

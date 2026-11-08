@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>সুচারু | Khulna Home & Office Services</title>
+  <meta name="description" content="সুচারু — Khulna-based home and office service platform for cleaning, AC, electrical, plumbing, pest control and moving services.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="css/style.css?v=3">
+  <link rel="stylesheet" href="css/account.css?v=1">
+</head>
+<body>
+
+<header class="navbar">
+  <div class="container nav-inner">
+    <a class="brand" href="#home">
+      <img src="assets/images/logo.jpeg" alt="সুচারু logo">
+      <span>সুচারু</span>
+    </a>
+
+    <button class="menu-toggle" id="menuToggle" aria-label="Open menu">☰</button>
+
+    <nav id="mainNav">
+      <a href="#home">Home</a>
+      <a href="#services">Services</a>
+      <a href="#how">How It Works</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#business">For Offices</a>
+      <a href="#contact">Contact</a>
+      <button class="nav-book account-nav" id="accountButton" type="button">Sign in</button>
+      <button class="nav-book" data-open-booking>Book a Service</button>
+    </nav>
+  </div>
+</header>
+
+<main id="home">
+  <section class="hero">
+    <div class="hero-overlay"></div>
+    <div class="container hero-content">
+      <div class="hero-copy">
+        <span class="eyebrow">KHULNA'S HOME & OFFICE SERVICE PLATFORM</span>
+        <h1>খুলনা যখন ডাকে,<br><span>সুচারু পাশে থাকে।</span></h1>
+        <p>Cleaning, AC, Electrical, Plumbing, Pest Control & Moving — প্রয়োজনের সেবা, এক জায়গায়।</p>
+
+        <div class="hero-actions">
+          <button class="primary-btn" data-open-booking>Book a Service <span>→</span></button>
+          <a class="secondary-btn" href="#services">Explore Services</a>
+        </div>
+
+        <div class="hero-search">
+          <span>⌕</span>
+          <input id="heroSearch" type="text" placeholder="What service do you need?">
+          <button id="heroSearchBtn">Search</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="trust-strip">
+    <div class="container trust-grid">
+      <div><strong>6</strong><span>Core Categories</span></div>
+      <div><strong>Khulna</strong><span>Launch Area</span></div>
+      <div><strong>1 Platform</strong><span>Multiple Services</span></div>
+      <div><strong>Easy</strong><span>Booking Process</span></div>
+    </div>
+  </section>
+
+  <section class="section" id="services">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow dark">OUR SERVICES</span>
+          <h2>যে কাজের জন্য মানুষ<br><span>বারবার খোঁজে লোক</span></h2>
+        </div>
+        <p>শুরুতে খুলনা সিটি কর্পোরেশন এলাকার নির্বাচিত জোনে সেবা দেওয়া হবে। দেখানো দামগুলো প্রাথমিক estimate—কাজের পরিধি নিশ্চিত হলে চূড়ান্ত মূল্য জানানো হবে।</p>
+      </div>
+
+      <div class="service-tools">
+        <div class="search-box">
+          <span>⌕</span>
+          <input id="serviceSearch" type="text" placeholder="Search service...">
+        </div>
+        <div class="filters" id="categoryFilters"></div>
+      </div>
+
+      <p id="catalogNotice" class="catalog-notice" hidden></p>
+
+      <div class="service-grid" id="serviceGrid"></div>
+      <p class="empty-state" id="emptyState" hidden>No matching service found.</p>
+    </div>
+  </section>
+
+  <section class="section soft" id="how">
+    <div class="container">
+      <div class="section-head centered">
+        <span class="eyebrow dark">HOW IT WORKS</span>
+        <h2>Booking থেকে service completion — <span>simple & clear</span></h2>
+        <p>Admin availability দেখে suitable partner assign করবে। Customer পুরো process-এ সুচারুর সঙ্গে যোগাযোগ রাখবে।</p>
+      </div>
+
+      <div class="steps">
+        <div class="step"><b>01</b><span>Service Select</span><p>আপনার প্রয়োজনের service বেছে নিন।</p></div>
+        <div class="step"><b>02</b><span>Booking Request</span><p>Address, phone, date ও preferred time দিন।</p></div>
+        <div class="step"><b>03</b><span>Partner Assigned</span><p>সুচারু available partner-এর কাছে job assign করবে।</p></div>
+        <div class="step"><b>04</b><span>Service Complete</span><p>কাজ শেষে payment ও feedback দিন।</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="pricing">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow dark">TRANSPARENT PRICING</span>
+          <h2>Price আগে পরিষ্কার,<br><span>surprise পরে নয়</span></h2>
+        </div>
+        <p>এগুলো প্রাথমিক starting estimate, নিশ্চিত quotation নয়। বাসার আয়তন, যন্ত্রের ধরন ও কাজের পরিধি দেখে বুকিং নিশ্চিত করার আগে চূড়ান্ত দাম জানানো হবে।</p>
+      </div>
+
+      <div class="pricing-note">
+        <div><strong>Service Charge</strong><span>কাজের labour/service fee</span></div>
+        <div><strong>Materials</strong><span>প্রয়োজনে আলাদা, customer approval-এর পর</span></div>
+        <div><strong>Extra Charge</strong><span>আগে জানানো ও approved হওয়া উচিত</span></div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Service</th><th>Estimated Starting Price</th><th>Pricing Type</th><th></th></tr>
+          </thead>
+          <tbody id="priceTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="section business-section" id="business">
+    <div class="container business-grid">
+      <div>
+        <span class="eyebrow">SUCARU OFFICE CARE</span>
+        <h2>একবার নয় — <span>বারবার service দরকার?</span></h2>
+        <p>Office, small business বা commercial space-এর জন্য recurring maintenance model তৈরি করা যাবে। Electrical, plumbing, AC check ও minor maintenance-এর মতো কাজ monthly plan-এর মাধ্যমে manage করা সম্ভব।</p>
+        <button class="primary-btn" data-open-booking data-service="Office Maintenance">Discuss Office Service →</button>
+      </div>
+      <div class="office-card">
+        <div class="card-top"><span>Office plan</span><strong>Custom quote</strong></div>
+        <ul>
+          <li>✓ Scheduled maintenance visits</li>
+          <li>✓ Basic electrical inspection</li>
+          <li>✓ Basic plumbing inspection</li>
+          <li>✓ AC check</li>
+          <li>✓ Priority support</li>
+          <li>+ Major repair/material separately</li>
+        </ul>
+        <small>Price and inclusions will be quoted after understanding your office and service needs.</small>
+      </div>
+    </div>
+  </section>
+
+  <section class="section status-section">
+    <div class="container status-card">
+      <div>
+        <span class="eyebrow dark">BOOKING STATUS</span>
+        <h2>আপনার booking কোথায়?</h2>
+        <p>Booking ID ও booking-এ দেওয়া ফোন নম্বর দিয়ে বর্তমান status দেখুন।</p>
+      </div>
+      <form id="trackingForm" class="tracking-form">
+        <label>Booking ID<input name="bookingId" required placeholder="SU-YYYYMMDD-ABC123" autocomplete="off"></label>
+        <label>Booking phone<input name="phone" required type="tel" inputmode="tel" placeholder="01XXXXXXXXX" autocomplete="tel"></label>
+        <button class="primary-btn" type="submit">Check status</button>
+      </form>
+      <div id="trackingResult" class="tracking-result" aria-live="polite" hidden></div>
+    </div>
+  </section>
+
+  <section class="section cta">
+    <div class="container cta-inner">
+      <div>
+        <span class="eyebrow">NEED A SERVICE?</span>
+        <h2>আপনার কাজের দায়িত্ব<br><span>সুচারুর হাতে দিন।</span></h2>
+      </div>
+      <button class="light-btn" data-open-booking>Start Booking →</button>
+    </div>
+  </section>
+
+  <section class="section contact" id="contact">
+    <div class="container contact-grid">
+      <div>
+        <span class="eyebrow dark">CONTACT</span>
+        <h2>সুচারুর সঙ্গে<br><span>যোগাযোগ করুন</span></h2>
+        <p>সার্ভিসের এলাকা, বুকিং ও ব্যবসায়িক যোগাযোগের জন্য Sucharu-তে সরাসরি যোগাযোগ করুন।</p>
+      </div>
+      <div class="contact-cards">
+        <a href="tel:+8801303434078"><span>☎</span><div><small>Call</small><strong>01303-434078</strong></div></a>
+        <a href="https://wa.me/8801303434078" target="_blank" rel="noopener noreferrer"><span>◉</span><div><small>WhatsApp</small><strong>01303-434078</strong></div></a>
+        <a href="https://t.me/share/url?url=&amp;text=Hello%20Sucharu%2C%20I%20need%20a%20service%20in%20Khulna." target="_blank" rel="noopener noreferrer"><span>✈</span><div><small>Telegram</small><strong>Message us, then find 01303-434078</strong></div></a>
+        <a href="mailto:adnankhandoker77@gmail.com"><span>✉</span><div><small>Email</small><strong>adnankhandoker77@gmail.com</strong></div></a>
+        <div><span>⌖</span><div><small>Service area</small><strong>Sonadanga, Sadar, Khalishpur & Daulatpur — selected Khulna City Corporation areas</strong></div></div>
+        <div><span>⌂</span><div><small>Office</small><strong>78/5 Sruti Villa, Sonadanga R/A 3rd Phase, Sonadanga, Khulna</strong></div></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="container footer-inner">
+    <div class="brand footer-brand"><img src="assets/images/logo.jpeg" alt="সুচারু"><span>সুচারু</span></div>
+    <p>Home & office services in selected Khulna City Corporation areas.</p>
+    <span>© <span id="year"></span> Sucharu. All rights reserved.</span>
+  </div>
+</footer>
+
+<div class="modal-backdrop" id="bookingModal" aria-hidden="true">
+  <div class="modal">
+    <button class="modal-close" id="modalClose">×</button>
+    <span class="eyebrow dark">BOOK A SERVICE</span>
+    <h2>আপনার service request পাঠান</h2>
+    <p class="modal-sub">এটি একটি service request। availability ও final price Sucharu থেকে নিশ্চিত করা হবে।</p>
+
+    <form id="bookingForm">
+      <div class="form-grid">
+        <label>Account name<input required name="name" type="text" placeholder="Your name" readonly></label>
+        <label>Account phone<input required name="phone" type="tel" placeholder="01XXXXXXXXX" readonly></label>
+        <label>Service<select required name="service" id="bookingService"></select></label>
+        <label>Preferred Date<input required name="date" type="date"></label>
+        <label>Preferred Time<select required name="time">
+          <option value="">Select time</option>
+          <option>09:00 AM - 11:00 AM</option>
+          <option>11:00 AM - 01:00 PM</option>
+          <option>02:00 PM - 04:00 PM</option>
+          <option>04:00 PM - 06:00 PM</option>
+          <option>06:00 PM - 08:00 PM</option>
+        </select></label>
+        <label>Area / Location<select required name="area">
+          <option value="">Select your area</option>
+          <option>Sonadanga</option><option>Khulna Sadar</option><option>Khalishpur</option><option>Daulatpur</option>
+          <option value="other-kcc">Other Khulna City Corporation area (availability confirmation required)</option>
+        </select></label>
+      </div>
+      <label>Full Address<textarea required name="address" rows="3" placeholder="House, road, area..."></textarea></label>
+      <label>Nearby landmark<input name="landmark" maxlength="250" placeholder="Optional landmark"></label>
+      <label>Additional Note<textarea name="note" rows="3" placeholder="Problem details, preferred instructions, etc."></textarea></label>
+
+      <label>Preferred payment method<select name="paymentMethod" id="paymentMethod" required>
+        <option value="cash_on_service">Cash on service (COD)</option>
+        <option value="bkash_manual">bKash (manual payment after confirmation)</option>
+        <option value="nagad_manual">Nagad (manual payment after confirmation)</option>
+      </select></label>
+      <p id="paymentHelp" class="payment-help" hidden></p>
+
+      <div class="price-preview" id="pricePreview">
+        <span>Estimated starting price</span>
+        <strong id="selectedPrice">—</strong>
+      </div>
+
+      <label class="check"><input type="checkbox" required> <span>I understand that final price may depend on inspection/materials and approved changes.</span></label>
+      <button class="primary-btn full" type="submit">Submit Booking Request →</button>
+    </form>
+    <section id="bookingConfirmation" class="booking-confirmation" aria-live="polite" hidden>
+      <div class="confirmation-mark" aria-hidden="true">✓</div>
+      <p class="eyebrow dark">REQUEST RECEIVED</p>
+      <h2>আপনার booking request পেয়েছি</h2>
+      <p class="modal-sub">Sucharu availability ও final price ফোনে confirm করবে। এই booking ID-টি রেখে দিন।</p>
+      <dl class="confirmation-details">
+        <div><dt>Booking ID</dt><dd id="confirmationBookingId"></dd></div>
+        <div><dt>Service</dt><dd id="confirmationService"></dd></div>
+        <div><dt>Preferred time</dt><dd id="confirmationSchedule"></dd></div>
+        <div><dt>Area</dt><dd id="confirmationArea"></dd></div>
+        <div><dt>Payment</dt><dd id="confirmationPayment"></dd></div>
+      </dl>
+      <p id="confirmationPaymentNote" class="payment-help"></p>
+      <button class="primary-btn full" id="confirmationClose" type="button">Done</button>
+    </section>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="accountModal" aria-hidden="true">
+  <section class="modal account-modal" role="dialog" aria-modal="true" aria-labelledby="accountTitle">
+    <button class="modal-close" id="accountClose" type="button" aria-label="Close">×</button>
+    <span class="eyebrow dark">SUCHARU ACCOUNT</span>
+    <h2 id="accountTitle">Sign in to your account</h2>
+    <p class="modal-sub">Book a service and keep your account ready for your next visit.</p>
+    <div id="accountSignedOut">
+      <form id="customerLoginForm">
+        <label>Phone number or email<input required name="identifier" autocomplete="username" placeholder="Phone number or email"></label>
+        <label>Password<input required name="password" type="password" autocomplete="current-password" minlength="6"></label>
+        <button class="primary-btn full" type="submit">Sign in</button>
+        <p class="account-switch"><button type="button" id="showPasswordReset">Forgot password?</button></p>
+        <p class="account-switch">New to Sucharu? <button type="button" id="showRegister">Create an account</button></p>
+        <div class="account-message" id="loginMessage" role="status"></div>
+      </form>
+      <form id="customerRegisterForm" hidden>
+        <label>Full name<input required name="name" autocomplete="name" maxlength="120" placeholder="Your name"></label>
+        <label>Phone number<input required name="phone" type="tel" autocomplete="tel" placeholder="01XXXXXXXXX"></label>
+        <label>Email <small>(required for account recovery)</small><input required name="email" type="email" autocomplete="email" maxlength="254" placeholder="you@example.com"></label>
+        <label>Create password<input required name="password" type="password" autocomplete="new-password" minlength="6" placeholder="At least 6 characters"></label>
+        <button class="primary-btn full" type="submit">Create account</button>
+        <p class="account-switch">Already have an account? <button type="button" id="showLogin">Sign in</button></p>
+        <div class="account-message" id="registerMessage" role="status"></div>
+      </form>
+      <form id="customerResetForm" hidden>
+        <p class="modal-sub">Get a one-time reset code at your registered email, then choose a new password.</p>
+        <label>Registered email<input required name="email" type="email" autocomplete="email" maxlength="254" placeholder="you@example.com"></label>
+        <div id="resetCodeFields" hidden>
+          <label>Email code<input name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" placeholder="6-digit code"></label>
+          <label>New password<input name="password" type="password" autocomplete="new-password" minlength="6" placeholder="At least 6 characters"></label>
+          <label>Confirm new password<input name="confirmPassword" type="password" autocomplete="new-password" minlength="6" placeholder="Enter it again"></label>
+          <button class="secondary-btn full" id="resetResend" type="button" hidden>Send another code</button>
+        </div>
+        <button class="primary-btn full" id="resetSubmit" type="submit">Send verification code</button>
+        <p class="account-switch"><button type="button" id="resetBackToLogin">Back to sign in</button></p>
+        <div class="account-message" id="resetMessage" role="status"></div>
+      </form>
+    </div>
+    <div id="accountSignedIn" hidden>
+      <p>You are signed in as <strong id="accountName"></strong></p>
+      <p id="accountContact" class="account-contact"></p>
+      <section class="saved-address-panel">
+        <h3>Account details</h3>
+        <button id="toggleProfileEditor" class="secondary-btn full" type="button">Edit name, mobile, email or password</button>
+        <form id="customerProfileForm" hidden>
+          <p class="modal-sub">Phone, email and password changes need your current password.</p>
+          <label>Full name<input name="name" type="text" maxlength="120" required></label>
+          <label>Mobile number<input name="phone" type="tel" maxlength="20" required></label>
+          <label>Email address<input name="email" type="email" maxlength="254" required></label>
+          <label>Current password<input name="currentPassword" type="password" autocomplete="current-password" placeholder="Needed for phone/email/password changes"></label>
+          <label>New password<input name="newPassword" type="password" autocomplete="new-password" minlength="6" placeholder="At least 6 characters"></label>
+          <label>Confirm new password<input name="confirmPassword" type="password" autocomplete="new-password" minlength="6" placeholder="Enter the new password again"></label>
+          <button class="primary-btn full" type="submit">Save account details</button>
+          <div id="profileMessage" class="account-message" role="status"></div>
+        </form>
+      </section>
+      <section class="saved-address-panel">
+        <h3>Saved service address</h3>
+        <p id="accountAddressSummary" class="account-contact">No saved service address yet.</p>
+        <button id="toggleAddressEditor" class="secondary-btn full" type="button">Add / edit saved address</button>
+        <form id="customerAddressForm" hidden>
+          <p class="modal-sub">Choose your area, type your full address, and optionally pin your entrance on the map.</p>
+          <label>Service area<select name="area" required>
+            <option value="Sonadanga">Sonadanga</option><option value="Khulna Sadar">Khulna Sadar</option><option value="Khalishpur">Khalishpur</option><option value="Daulatpur">Daulatpur</option><option value="other-kcc">Other Khulna City Corporation area</option>
+          </select></label>
+          <label>Full address<textarea name="address" rows="3" maxlength="500" required placeholder="House, road, area..."></textarea></label>
+          <label>Nearby landmark<input name="landmark" maxlength="250" placeholder="Optional landmark"></label>
+          <button id="pickAddressMap" class="secondary-btn full" type="button">Choose a pin on the map (optional)</button>
+          <p id="addressPinSummary" class="account-contact">No map pin selected.</p>
+          <button class="primary-btn full" type="submit">Save address</button>
+          <button id="removeSavedAddress" class="secondary-btn full" type="button">Remove saved address</button>
+          <div id="addressMessage" class="account-message" role="status"></div>
+        </form>
+      </section>
+      <h3>My bookings</h3>
+      <div id="myBookings" class="my-bookings">Loading bookings…</div>
+      <button id="customerLogout" class="secondary-btn full" type="button">Sign out</button>
+    </div>
+  </section>
+</div>
+
+<div class="modal-backdrop map-picker-backdrop" id="addressMapModal" aria-hidden="true">
+  <section class="modal map-picker-modal" role="dialog" aria-modal="true" aria-labelledby="addressMapTitle">
+    <button class="modal-close" id="addressMapClose" type="button" aria-label="Close map">×</button>
+    <h2 id="addressMapTitle">Pin your entrance</h2>
+    <p class="modal-sub">Tap or drag the marker to your entrance. Map data © OpenStreetMap contributors.</p>
+    <div id="addressMap" aria-label="OpenStreetMap location picker"></div>
+    <p id="mapPickerStatus" class="account-contact">Move the map or tap your location to position the marker.</p>
+    <button id="confirmAddressPin" class="primary-btn full" type="button">Use this pin</button>
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script type="module" src="js/main.js?v=10"></script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Sucharu Partner Portal</title><link rel="stylesheet" href="partner.css?v=1">
+</head>
+<body>
+  <header><a href="../">সুচারু</a><span>Partner Portal</span></header>
+  <main>
+    <section id="loginView" class="panel login-panel">
+      <h1>Partner sign in</h1><p>Use the phone number and password given by Sucharu admin.</p>
+      <form id="loginForm"><label>Phone number<input name="phone" type="tel" autocomplete="username" required></label><label>Password<input name="password" type="password" autocomplete="current-password" required></label><button>Sign in</button><div id="loginError" class="error" role="status"></div></form>
+    </section>
+    <section id="portalView" hidden>
+      <div class="welcome"><div><small>Signed in as</small><h1 id="partnerName">Partner</h1><span id="partnerId"></span></div><button id="logout" class="secondary">Sign out</button></div>
+      <div class="notice">Customer details are private. Use them only to complete the assigned Sucharu booking.</div>
+      <div class="toolbar"><h2>My assigned bookings</h2><button id="refresh">Refresh</button></div>
+      <div id="jobs" class="jobs"><p>Loading bookings…</p></div>
+    </section>
+  </main>
+  <script src="partner.js?v=2"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+# Backend credentials and private local settings
+backend/.env
+backend/.env.*
+!backend/.env.example
+backend/secrets/
+
+# Dependencies and generated browser/build files
+**/node_modules/
+**/.DS_Store
+*.log
+
+# This export is a local browser profile with cookies, history and login data
+Genji_Design/exports/render-profile/
+
+# Unused Expo starter; the native Android app is maintained separately
+sucharu-android/

@@ -1,0 +1,24 @@
+.account-nav{background:#eaf2e8;color:var(--green)}
+.account-modal{width:min(520px,100%)}
+.account-modal h2{font-size:1.7rem}
+.account-modal form label{display:block;font-size:.88rem;font-weight:600;margin:13px 0}
+.account-modal form input{display:block;width:100%;padding:11px;border:1px solid var(--line);border-radius:8px;margin-top:5px}
+.account-modal form label small{font-weight:400;color:var(--muted)}
+.account-switch{text-align:center;color:var(--muted);margin:14px 0 0}
+.account-switch button{border:0;background:none;color:var(--green);font-weight:700;padding:4px}
+.account-message{color:#9b2525;font-size:.9rem;margin-top:8px;min-height:20px}
+.account-contact{color:var(--muted)}
+.saved-address-panel{margin:20px 0;padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--cream)}
+.saved-address-panel h3{margin:0 0 8px}
+.saved-address-panel form{margin-top:14px}
+.saved-address-panel form label{display:block;font-size:.88rem;font-weight:600;margin:12px 0}
+.saved-address-panel form input,.saved-address-panel form select,.saved-address-panel form textarea{display:block;width:100%;padding:11px;border:1px solid var(--line);border-radius:8px;margin-top:5px;font:inherit;background:white;color:var(--ink)}
+.saved-address-panel .secondary-btn{background:white;color:var(--green);border:1px solid var(--line)}
+.map-picker-backdrop{z-index:80}
+.map-picker-modal{width:min(720px,100%)}
+#addressMap{height:min(58vh,560px);min-height:300px;border-radius:10px;z-index:1}
+.my-bookings{max-height:280px;overflow:auto;margin:12px 0 18px}
+.my-booking{padding:12px;border:1px solid var(--line);border-radius:9px;margin:8px 0}
+.my-booking strong,.my-booking span{display:block}
+.my-booking span{font-size:.84rem;color:var(--muted)}
+.account-modal [hidden]{display:none!important}

@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sucharu Admin</title>
+<link rel="stylesheet" href="admin.css?v=4">
+</head>
+<body>
+<div id="loginView" class="center">
+  <form id="loginForm" class="panel login">
+    <h1>সুচারু Admin</h1><p>Sign in to manage bookings, partners and pricing.</p>
+    <input name="email" type="email" placeholder="Admin email" required>
+    <input name="password" type="password" placeholder="Password" required>
+    <button type="submit">Login</button><div id="loginError"></div>
+  </form>
+</div>
+
+<div id="app" hidden>
+  <aside>
+    <h2>সুচারু</h2>
+    <button data-tab="dashboard">Dashboard</button>
+    <button data-tab="bookings">Bookings</button>
+    <button data-tab="partners">Partners</button>
+    <button data-tab="services">Services</button>
+    <button id="logout">Logout</button>
+  </aside>
+  <main>
+    <header><div><small>Operations</small><h1 id="title">Dashboard</h1></div><span id="apiState">● API</span></header>
+
+    <section id="dashboard" class="tab">
+      <div class="cards" id="summaryCards"></div>
+      <div class="panel"><h2>Booking Status</h2><div id="statusList"></div></div>
+    </section>
+
+    <section id="bookings" class="tab" hidden>
+      <div class="toolbar"><h2>Bookings</h2><button id="refreshBookings">Refresh</button></div>
+      <div class="table-wrap"><table><thead><tr><th>ID</th><th>Customer</th><th>Service</th><th>Schedule</th><th>Status</th><th>Partner assignment</th><th>Action</th></tr></thead><tbody id="bookingRows"></tbody></table></div>
+    </section>
+
+    <section id="partners" class="tab" hidden>
+      <div class="toolbar"><div><h2>Partners</h2><small>New partners start pending and inactive. Verify them before activation or assignment.</small></div><button id="newPartner">+ Add Partner</button></div>
+      <div class="table-wrap"><table><thead><tr><th>ID</th><th>Name</th><th>Phone</th><th>Category</th><th>Verification</th><th>Status</th><th>Portal</th><th>Jobs</th><th>Action</th></tr></thead><tbody id="partnerRows"></tbody></table></div>
+    </section>
+
+    <section id="services" class="tab" hidden>
+      <div class="toolbar"><h2>Services & Pricing</h2><button id="refreshServices">Refresh</button></div>
+      <div class="table-wrap"><table><thead><tr><th>Service</th><th>Category</th><th>Customer</th><th>Worker</th><th>Margin</th><th>Active</th><th>Action</th></tr></thead><tbody id="serviceRows"></tbody></table></div>
+    </section>
+  </main>
+</div>
+
+<div id="modal" class="modal-bg" hidden><div class="panel modal"><button id="closeModal">×</button><h2>Add Partner</h2><form id="partnerForm">
+<input name="name" placeholder="Name" required><input name="phone" placeholder="Phone" required>
+<small class="form-hint">Use service category names exactly as shown in Services. Separate multiple values with commas.</small>
+<input name="category" placeholder="e.g. Cleaning, AC Services" required><input name="area" placeholder="e.g. Sonadanga, Khulna Sadar">
+<small class="form-hint">Use exact areas: Sonadanga, Khulna Sadar, Khalishpur, Daulatpur, or other-kcc. Leave blank only if they can serve every area.</small>
+<input name="experienceYears" type="number" placeholder="Experience years"><label><input name="hasTools" type="checkbox"> Has own tools</label>
+<label><input name="emergencyAvailable" type="checkbox"> Emergency availability</label>
+<button>Add Partner</button></form></div></div>
+<div id="portalModal" class="modal-bg" hidden><div class="panel modal"><button id="closePortalModal" type="button">×</button><h2>Set Partner Portal Password</h2><p>Partner-কে password আলাদা করে নিরাপদভাবে দিন। এখানে পাঠাবেন না।</p><form id="portalForm"><input name="password" type="password" minlength="12" maxlength="200" autocomplete="new-password" placeholder="At least 12 characters" required><button>Enable portal access</button><div id="portalError" role="status"></div></form></div></div>
+<script src="admin.js?v=9"></script>
+</body>
+</html>
