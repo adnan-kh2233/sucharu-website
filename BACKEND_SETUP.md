@@ -51,6 +51,22 @@ The website and native Android app use the same Express API and the same Firesto
 
 For a physical Android phone, connect the phone and development computer to the same trusted Wi-Fi, then set `sucharuApiBaseUrl` to `http://<computer-LAN-IPv4>:5000/api` in Android Studio's Gradle properties or pass `-PsucharuApiBaseUrl=http://<computer-LAN-IPv4>:5000/api` to the Gradle build. Allow the Node process through the computer firewall on the private network if Android Studio or Windows asks. The Android debug manifest already permits cleartext HTTP for local development. For a release build, use a deployed HTTPS API URL with the same property; do not ship a local IP or HTTP endpoint.
 
+## No-cost internet demo deployment
+
+For a cable-free school demo without Google Cloud prepayment, this repository includes a Render Blueprint in `render.yaml`. It runs only the existing Express API on Render's **Free** web-service plan in Singapore; Firestore remains the database in Firebase. Keep the Firebase project on the Spark plan and do not upgrade it to Blaze or attach paid services for this deployment. Spark provides capped no-cost quotas; if a product exceeds its quota, that product is disabled until the next cycle instead of switching to pay-as-you-go.
+
+In the Render Dashboard, create a Blueprint from this GitHub repository and select `render.yaml`. Choose the Free plan. Do not add a payment method. After Render creates the service, open **Environment** and upload the private `backend/secrets/firebase-admin.json` as a secret file named `firebase-admin.json`. The Blueprint sets `GOOGLE_APPLICATION_CREDENTIALS` to Render's `/etc/secrets/firebase-admin.json` path. Enter the local `JWT_SECRET`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` values individually in Render's Environment settings; do not put them in this repository or paste them into chat. Do not upload the whole `.env` file.
+
+The free service sleeps after 15 minutes without requests and may take about one minute to wake up. Free-plan limits can suspend the service instead of billing when no payment method is attached. This is suitable for a low-traffic demo, not an always-on production service. The existing password-reset email implementation uses SMTP; Render Free blocks SMTP ports 25, 465, and 587, so email-code recovery will need an HTTPS email API or another compatible free method before it can work there.
+
+After the first successful deploy, use its HTTPS service URL as the Android API base URL. From the Android project folder, build an installable debug APK with:
+
+```powershell
+./gradlew.bat assembleDebug "-PsucharuApiBaseUrl=https://<your-render-service>.onrender.com/api"
+```
+
+The app can then be installed on the phone and used over Wi-Fi or mobile data without the USB cable. Verify the deployed API first at `https://<your-render-service>.onrender.com/api/health`; it should report a connected Firebase database.
+
 ## Main API features
 
 - Customer account registration/login and booking history.
