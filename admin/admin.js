@@ -7,6 +7,7 @@ function headers(){return {"Content-Type":"application/json","Authorization":"Be
 async function api(path, opts={}) {
   const r = await fetch(API+path, {...opts, headers:{...headers(), ...(opts.headers||{})}});
   const data = await r.json().catch(()=>({}));
+  if(r.status===401||r.status===403){token=null;localStorage.removeItem("sucharuAdminToken");showLogin();$("#loginError").textContent=data.message||"Admin session expired. Please sign in again.";throw new Error(data.message||"Admin sign-in required.")}
   if(!r.ok) throw new Error(data.message||"Request failed");
   return data;
 }
@@ -42,7 +43,7 @@ async function loadDashboard(){
       ["Completed Service Value (est.)",`৳${Number(d.completedServiceValue||0).toLocaleString()}`]
     ].map(x=>`<div class="card"><strong>${x[1]}</strong><span>${x[0]}</span></div>`).join("");
     $("#statusList").innerHTML=(d.statusCounts||[]).map(x=>`<div class="status-row"><span>${escapeHTML(x._id)}</span><b>${Number(x.count)||0}</b></div>`).join("");
-  }catch(e){$("#apiState").textContent="● API offline"}
+  }catch(e){if(token)$("#apiState").textContent="● API offline"}
 }
 async function loadBookings(){
   try{
