@@ -96,6 +96,18 @@ router.get("/bookings", async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
+router.get("/bookings/:bookingId/location", async (req, res, next) => {
+  try {
+    const booking = await get("bookings", req.params.bookingId);
+    if (!booking || booking.customerId !== req.customer._id) return res.status(404).json({ message: "Booking not found." });
+    if (booking.status !== "on_the_way" || !booking.partner?.partnerId) return res.status(409).json({ message: "Partner location is available only while the partner is on the way." });
+    const location = await get("bookingLocations", booking._id);
+    if (!location || location.partnerId !== booking.partner.partnerId || location.customerId !== req.customer._id) return res.status(404).json({ message: "Waiting for the partner to share their location." });
+    if (Date.now() - new Date(location.updatedAt || 0).getTime() > 2 * 60 * 1000) return res.status(404).json({ message: "The partner location is temporarily unavailable. Waiting for the next update." });
+    return res.json({ latitude: location.latitude, longitude: location.longitude, accuracy: location.accuracy, updatedAt: location.updatedAt });
+  } catch (error) { next(error); }
+});
+
 router.get("/favorites", async (req, res, next) => {
   try {
     const favorites = (await all("customerFavorites"))
@@ -175,6 +187,7 @@ router.post("/bookings/:bookingId/cancel", async (req, res, next) => {
     const reason = String(req.body?.reason || "").trim();
     if (reason.length > 300) return res.status(400).json({ message: "Cancellation note must be 300 characters or less." });
     const updated = await put("bookings", booking._id, { status: "cancelled", cancellationReason: reason, cancelledBy: "customer", cancelledAt: new Date() }, true);
+    await remove("bookingLocations", booking._id);
     await notifyCustomer({ customerId: booking.customerId, bookingId: booking.bookingId, type: "booking_cancelled", title: "Booking cancelled", body: `Your ${booking.service?.name || "service"} request has been cancelled.` });
     return res.json({ bookingId: updated.bookingId, status: updated.status, message: "Booking cancelled." });
   } catch (error) { next(error); }
