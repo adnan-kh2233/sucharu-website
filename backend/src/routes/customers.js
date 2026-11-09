@@ -90,8 +90,8 @@ router.get("/bookings", async (req, res, next) => {
       .filter(booking => booking.customerId === req.customer._id)
       .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))
       .slice(0, 100)
-      .map(({ bookingId, service, schedule, area, address, landmark, location, paymentMethod, paymentStatus, status, createdAt, review, scheduleChangeCount, cancellationReason }) => ({
-        bookingId, service: { name: service?.name }, schedule, area, address, landmark, location, paymentMethod, paymentStatus, status, createdAt, review, scheduleChangeCount, cancellationReason,
+      .map(({ bookingId, service, schedule, area, address, landmark, location, paymentMethod, paymentStatus, status, partner, createdAt, review, scheduleChangeCount, cancellationReason }) => ({
+        bookingId, service: { name: service?.name }, schedule, area, address, landmark, location, paymentMethod, paymentStatus, status, partner: partner ? { name: partner.name } : null, createdAt, review, scheduleChangeCount, cancellationReason,
       })));
   } catch (error) { next(error); }
 });
