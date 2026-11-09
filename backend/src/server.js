@@ -29,7 +29,7 @@ function createApp() {
     if (!origin || origins.includes(origin)) return callback(null, true);
     return callback(new Error("Origin is not allowed by CORS."));
   }, methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"], allowedHeaders: ["Content-Type", "Authorization"], maxAge: 600 }));
-  app.use(express.json({ limit: "32kb", strict: true }));
+  app.use(express.json({ limit: "512kb", strict: true }));
   app.use((req, res, next) => {
     if (req.method === "POST" && req.get("X-HTTP-Method-Override") === "PATCH") req.method = "PATCH";
     next();

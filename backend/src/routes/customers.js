@@ -90,9 +90,23 @@ router.get("/bookings", async (req, res, next) => {
       .filter(booking => booking.customerId === req.customer._id)
       .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))
       .slice(0, 100)
-      .map(({ bookingId, service, schedule, area, address, landmark, location, paymentMethod, paymentStatus, status, partner, createdAt, review, scheduleChangeCount, cancellationReason }) => ({
-        bookingId, service: { name: service?.name }, schedule, area, address, landmark, location, paymentMethod, paymentStatus, status, partner: partner ? { name: partner.name } : null, createdAt, review, scheduleChangeCount, cancellationReason,
+      .map(({ bookingId, service, schedule, area, address, landmark, location, paymentMethod, paymentStatus, status, partner, createdAt, review, scheduleChangeCount, cancellationReason, completionProofPresent, serviceStartedAt, serviceCompletedAt }) => ({
+        bookingId, service: { name: service?.name }, schedule, area, address, landmark, location, paymentMethod, paymentStatus, status, partner: partner ? { name: partner.name } : null, createdAt, review, scheduleChangeCount, cancellationReason, completionProofPresent: Boolean(completionProofPresent), serviceStartedAt, serviceCompletedAt,
       })));
+  } catch (error) { next(error); }
+});
+
+router.post("/bookings/:bookingId/start-code", async (req, res, next) => {
+  try {
+    const booking = await get("bookings", req.params.bookingId);
+    if (!booking || booking.customerId !== req.customer._id) return res.status(404).json({ message: "Booking not found." });
+    if (booking.status !== "on_the_way" || !booking.partner?.partnerId) return res.status(409).json({ message: "A service code is available after your assigned partner is on the way." });
+    const now = Date.now(), lastIssued = new Date(booking.startOtpIssuedAt || 0).getTime();
+    if (booking.startOtpHash && now - lastIssued < 30000) return res.status(429).json({ message: "A code was just generated. Use the code already shown or wait 30 seconds to make a new one." });
+    const code = String(crypto.randomInt(100000, 1000000)), salt = crypto.randomBytes(16).toString("hex"), hash = crypto.scryptSync(code, salt, 64).toString("hex");
+    const expiresAt = new Date(now + 15 * 60 * 1000);
+    await put("bookings", booking._id, { startOtpHash: hash, startOtpSalt: salt, startOtpIssuedAt: new Date(now), startOtpExpiresAt: expiresAt, startOtpAttempts: 0 }, true);
+    return res.json({ bookingId: booking.bookingId, code, expiresAt, message: "Share this code with your assigned partner when they arrive." });
   } catch (error) { next(error); }
 });
 
@@ -105,6 +119,17 @@ router.get("/bookings/:bookingId/location", async (req, res, next) => {
     if (!location || location.partnerId !== booking.partner.partnerId || location.customerId !== req.customer._id) return res.status(404).json({ message: "Waiting for the partner to share their location." });
     if (Date.now() - new Date(location.updatedAt || 0).getTime() > 2 * 60 * 1000) return res.status(404).json({ message: "The partner location is temporarily unavailable. Waiting for the next update." });
     return res.json({ latitude: location.latitude, longitude: location.longitude, accuracy: location.accuracy, updatedAt: location.updatedAt });
+  } catch (error) { next(error); }
+});
+
+router.get("/bookings/:bookingId/completion-proof", async (req, res, next) => {
+  try {
+    const booking = await get("bookings", req.params.bookingId);
+    if (!booking || booking.customerId !== req.customer._id) return res.status(404).json({ message: "Booking not found." });
+    if (booking.status !== "completed" || !booking.completionProofPresent) return res.status(404).json({ message: "No service report is available for this booking." });
+    const proof = await get("bookingCompletionProofs", booking._id);
+    if (!proof || proof.customerId !== req.customer._id || proof.partnerId !== booking.partner?.partnerId) return res.status(404).json({ message: "Service report not found." });
+    return res.json({ bookingId: proof.bookingId, checklist: proof.checklist, notes: proof.notes, beforeImage: proof.beforeImage, afterImage: proof.afterImage, completedAt: proof.completedAt });
   } catch (error) { next(error); }
 });
 
