@@ -1,4 +1,4 @@
-const API=`${location.protocol}//${location.hostname}:5000/api`;
+const API=window.SUCHARU_API_URL||"https://sucharu-api.onrender.com/api";
 let token=localStorage.getItem("sucharuPartnerToken");
 let partner=JSON.parse(localStorage.getItem("sucharuPartnerProfile")||"null");
 const $=s=>document.querySelector(s);

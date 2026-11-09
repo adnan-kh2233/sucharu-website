@@ -1,4 +1,4 @@
-const API = `${location.protocol}//${location.hostname}:5000/api`;
+const API = window.SUCHARU_API_URL || "https://sucharu-api.onrender.com/api";
 let token = localStorage.getItem("sucharuAdminToken");
 const $ = s => document.querySelector(s);
 const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
