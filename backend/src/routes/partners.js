@@ -9,10 +9,15 @@ router.post("/", async (req,res,next) => {
   try {
     const body=req.body||{}, name=String(body.name||"").trim(), phone=String(body.phone||"").replace(/[\s-]/g, "");
     const category=Array.isArray(body.category)?body.category.map(v=>String(v).trim()).filter(Boolean):[], area=Array.isArray(body.area)?body.area.map(v=>String(v).trim()).filter(Boolean):[];
+    const skills=Array.isArray(body.skills)?body.skills.map(v=>String(v).trim()).filter(Boolean):[], availableDays=Array.isArray(body.availableDays)?body.availableDays.map(v=>String(v).trim()).filter(Boolean):[], availableTimes=Array.isArray(body.availableTimes)?body.availableTimes.map(v=>String(v).trim()).filter(Boolean):[];
+    const optional={};
+    for(const key of ["fatherName","motherName","permanentAddress","occupation","nationality","facebook","whatsapp","email","nidNumber"])optional[key]=String(body[key]||"").trim();
+    const monthlyIncome=String(body.monthlyIncome||"").trim();
     if(!name||name.length>120||!/^(?:\+?8801|01)[3-9]\d{8}$/.test(phone)||!category.length||category.length>20||area.length>30||category.some(v=>v.length>80)||area.some(v=>v.length>100)) return res.status(400).json({message:"Enter a valid partner name, Bangladesh phone number, at least one category and valid service areas."});
+    if(Object.values(optional).some(v=>v.length>500)||skills.length>30||availableDays.length>7||availableTimes.length>10||skills.some(v=>v.length>100)||availableDays.some(v=>v.length>30)||availableTimes.some(v=>v.length>50)||!/^(?:|\d{1,12})$/.test(monthlyIncome)||optional.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(optional.email))return res.status(400).json({message:"Check the optional partner information and try again."});
     if((await all("partners")).some(p=>p.phone===phone)) return res.status(409).json({message:"A partner already uses that phone number."});
     const id=collection("partners").doc().id, partnerId=`SP-${Date.now().toString(36).toUpperCase()}`;
-    return res.status(201).json(await put("partners",id,{partnerId,name,phone,category,area,experienceYears:Number(body.experienceYears||0),hasTools:Boolean(body.hasTools),emergencyAvailable:Boolean(body.emergencyAvailable),portalEnabled:false,lastPortalLoginAt:null,verificationStatus:"pending",status:"inactive",completedJobs:0}));
+    return res.status(201).json(await put("partners",id,{partnerId,name,phone,category,area,...optional,monthlyIncome:monthlyIncome?Number(monthlyIncome):null,skills,availableDays,availableTimes,experienceYears:Number(body.experienceYears||0),hasTools:Boolean(body.hasTools),emergencyAvailable:Boolean(body.emergencyAvailable),portalEnabled:false,lastPortalLoginAt:null,verificationStatus:"pending",status:"inactive",completedJobs:0}));
   }catch(e){next(e);}
 });
 router.patch("/:id", async(req,res,next)=>{
