@@ -89,7 +89,6 @@ router.get("/bookings", async (req, res, next) => {
     return res.json((await all("bookings"))
       .filter(booking => booking.customerId === req.customer._id)
       .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))
-      .slice(0, 100)
       .map(({ bookingId, service, schedule, area, address, landmark, location, paymentMethod, paymentStatus, status, partner, createdAt, review, scheduleChangeCount, cancellationReason, completionProofPresent, serviceStartedAt, serviceCompletedAt, invoice }) => ({
         bookingId, service: { name: service?.name }, schedule, area, address, landmark, location, paymentMethod, paymentStatus, status, partner: partner ? { name: partner.name } : null, createdAt, review, scheduleChangeCount, cancellationReason, completionProofPresent: Boolean(completionProofPresent), serviceStartedAt, serviceCompletedAt, invoice: invoice || null,
       })));

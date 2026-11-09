@@ -157,15 +157,17 @@ const firebaseAuth = getAuth(firebaseApp);
       const response=await fetch(`${API}/customers/bookings`,{headers:{Authorization:`Bearer ${token}`}});
       const rows=await response.json().catch(()=>[]);
       if(!response.ok)throw new Error(rows.message||"Could not load bookings.");
-      if(!rows.length){container.textContent="No bookings yet.";return;}
+      if(!rows.length){container.textContent="No bookings yet. Your service requests will appear here.";return;}
       const statusLabels={booking_received:"Request received",confirmed:"Confirmed",assigned:"Partner assigned",on_the_way:"Partner on the way",service_started:"Service started",awaiting_customer_confirmation:"Waiting for your confirmation",customer_issue_reported:"Sucharu support is reviewing your concern",completed:"Completed",cancelled:"Cancelled"};
       container.innerHTML=rows.map(row=>{
         const id=esc(row.bookingId),status=row.status,manageable=["booking_received","confirmed"].includes(status),review=row.review;
         const schedule=row.schedule||{};
         const invoice=row.invoice;
         const invoiceDetails=invoice?`<details class="customer-invoice"><summary>${row.paymentStatus==="paid"?"View payment receipt":"View invoice"} · ৳${Number(invoice.total||0).toLocaleString("en-BD")}</summary><div class="invoice-breakdown"><p><span>Service charge</span><b>৳${Number(invoice.serviceCharge||0).toLocaleString("en-BD")}</b></p><p><span>Labor</span><b>৳${Number(invoice.laborCharge||0).toLocaleString("en-BD")}</b></p><p><span>Materials</span><b>৳${Number(invoice.materialsCharge||0).toLocaleString("en-BD")}</b></p><p><span>Discount</span><b>− ৳${Number(invoice.discount||0).toLocaleString("en-BD")}</b></p><p class="invoice-total"><span>Total</span><b>৳${Number(invoice.total||0).toLocaleString("en-BD")}</b></p><p><span>Payment</span><b>${row.paymentStatus==="paid"?"Paid":"Payment pending"}</b></p>${row.paymentMethod?`<p><span>Method</span><b>${esc(({cash_on_service:"Cash on service",bkash_manual:"bKash",nagad_manual:"Nagad"})[row.paymentMethod]||row.paymentMethod)}</b></p>`:""}${invoice.note?`<p class="invoice-note">${esc(invoice.note)}</p>`:""}<button type="button" class="secondary-btn invoice-print" data-invoice-print="${id}">Print / Save as PDF</button></div></details>`:"";
+        const canRebook=["completed","cancelled"].includes(status);
         return `<article class="my-booking" data-booking-card="${id}"><strong>${esc(row.service?.name||"Service")} · ${id}</strong><span>${esc(statusLabels[status]||status)} · ${esc(schedule.date||"")} · ${esc(schedule.time||"")}</span><span>${esc(row.area||"")}</span>
           ${invoiceDetails}
+          ${canRebook?`<button type="button" class="secondary-btn" data-rebook="${id}">Book this service again</button>`:""}
           ${manageable?`<div class="booking-manage-actions"><button type="button" class="secondary-btn" data-toggle-reschedule>Change time</button><button type="button" class="secondary-btn danger-action" data-cancel-booking>Cancel</button></div><form class="reschedule-form" data-reschedule-form hidden><label>New date<input name="date" type="date" required min="${esc(new Date().toISOString().slice(0,10))}"></label><label>Time window<select name="time" required><option value="09:00 AM - 11:00 AM">09:00 AM - 11:00 AM</option><option value="11:00 AM - 01:00 PM">11:00 AM - 01:00 PM</option><option value="02:00 PM - 04:00 PM">02:00 PM - 04:00 PM</option><option value="04:00 PM - 06:00 PM">04:00 PM - 06:00 PM</option><option value="06:00 PM - 08:00 PM">06:00 PM - 08:00 PM</option></select></label><button class="primary-btn full" type="submit">Save new schedule</button><p class="account-message" role="status"></p></form>`:""}
           ${status==="on_the_way"&&row.partner?`<button type="button" class="secondary-btn" data-start-code>Show service start code</button>`:""}
           ${row.completionProofPresent&&["awaiting_customer_confirmation","customer_issue_reported","completed"].includes(status)?`<button type="button" class="secondary-btn" data-completion-report>View service report</button>`:""}
@@ -176,6 +178,17 @@ const firebaseAuth = getAuth(firebaseApp);
       container.querySelectorAll("[data-invoice-print]").forEach(button=>button.addEventListener("click",()=>{
         const row=rows.find(item=>String(item.bookingId)===button.dataset.invoicePrint);
         if(row?.invoice)openInvoicePrintPage(row);
+      }));
+      container.querySelectorAll("[data-rebook]").forEach(button=>button.addEventListener("click",()=>{
+        const row=rows.find(item=>String(item.bookingId)===button.dataset.rebook);if(!row)return;
+        openBooking(row.service?.name||"");
+        const form=$("#bookingForm"),set=(name,value)=>{if(form.elements[name])form.elements[name].value=value||"";};
+        set("area",row.area);set("address",row.address);set("landmark",row.landmark);set("paymentMethod",row.paymentMethod||"cash_on_service");set("date","");set("time","");set("note","");
+        const acknowledge=form.querySelector('input[type="checkbox"]');if(acknowledge)acknowledge.checked=true;
+        const today=new Date();today.setMinutes(today.getMinutes()-today.getTimezoneOffset());form.elements.date.min=today.toISOString().slice(0,10);
+        form.dataset.rebookLocation=JSON.stringify({area:row.area,address:row.address,location:row.location||null});
+        toast("Previous service and address filled in. Choose a new date and time, then review and submit.");
+        form.elements.date.focus();
       }));
       container.querySelectorAll("[data-start-code]").forEach(button=>button.addEventListener("click",async()=>{
         button.disabled=true;try{const id=button.closest("[data-booking-card]").dataset.bookingCard,key=`sucharuStartCode:${id}`,saved=JSON.parse(sessionStorage.getItem(key)||"null");if(saved&&saved.expiresAt>Date.now()){window.alert(`Service start code: ${saved.code}\n\nShare it only with your assigned partner after they arrive. It expires in 15 minutes.`);return;}const token=await customerBearerToken(),response=await fetch(`${API}/customers/bookings/${encodeURIComponent(id)}/start-code`,{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({})}),payload=await response.json().catch(()=>({}));if(!response.ok)throw new Error(payload.message||"Could not generate the service code.");sessionStorage.setItem(key,JSON.stringify({code:payload.code,expiresAt:Date.now()+15*60*1000}));window.alert(`Service start code: ${payload.code}\n\nShare it only with your assigned partner after they arrive. It expires in 15 minutes.`);}catch(error){toast(error.message||"Could not generate the service code.");}finally{button.disabled=false;}
@@ -278,6 +291,7 @@ const firebaseAuth = getAuth(firebaseApp);
     if(saved){$("#bookingForm [name=area]").value=saved.area;$("#bookingForm [name=address]").value=saved.address;$("#bookingForm [name=landmark]").value=saved.landmark||"";}
     const modal=$("#bookingModal"); modal.classList.add("open"); modal.setAttribute("aria-hidden","false"); document.body.style.overflow="hidden";
     resetConfirmation();
+    delete $("#bookingForm").dataset.rebookLocation;
     if(service) $("#bookingService").value=service;
     priceUpdate(); $("#modalClose").focus();
   }
@@ -444,7 +458,7 @@ const firebaseAuth = getAuth(firebaseApp);
     const phone=data.phone.replace(/[\s-]/g,"");if(!/^(?:\+?8801|01)[3-9]\d{8}$/.test(phone)){toast("Enter a valid Bangladesh mobile number.");return}
     button.disabled=true;button.textContent="Sending…";
     if(!customerToken||!currentCustomer){closeBooking();pendingService=data.service;openAccount("login");button.disabled=false;button.textContent="Submit Booking Request →";return;}
-    try{const token=await customerBearerToken(),saved=currentCustomer.defaultAddress,sameAddress=saved&&saved.address===data.address&&saved.area===data.area,body={service:{name:data.service},schedule:{date:data.date,time:data.time},area:data.area,address:data.address,landmark:data.landmark,note:data.note,paymentMethod:data.paymentMethod,...(sameAddress&&saved.latitude!=null?{location:{latitude:saved.latitude,longitude:saved.longitude}}:{})};const response=await fetch(`${API}/bookings`,{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify(body)});const result=await response.json().catch(()=>({}));if(!response.ok)throw new Error(result.message||"Could not submit booking.");showBookingConfirmation(data,result);form.reset();priceUpdate();paymentUpdate();loadMyBookings()}catch(err){toast(err instanceof TypeError?"Could not connect to the booking API. Check that the backend is running.":err.message||"Could not submit booking.")}finally{button.disabled=false;button.textContent="Submit Booking Request →"}
+    try{const token=await customerBearerToken(),saved=currentCustomer.defaultAddress,sameAddress=saved&&saved.address===data.address&&saved.area===data.area;let rebookLocation=null;try{rebookLocation=JSON.parse(form.dataset.rebookLocation||"null")}catch{}const priorPin=rebookLocation&&rebookLocation.address===data.address&&rebookLocation.area===data.area?rebookLocation.location:null;const location=priorPin||((sameAddress&&saved.latitude!=null)?{latitude:saved.latitude,longitude:saved.longitude}:null);const body={service:{name:data.service},schedule:{date:data.date,time:data.time},area:data.area,address:data.address,landmark:data.landmark,note:data.note,paymentMethod:data.paymentMethod,...(location?{location}:{})};const response=await fetch(`${API}/bookings`,{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify(body)});const result=await response.json().catch(()=>({}));if(!response.ok)throw new Error(result.message||"Could not submit booking.");showBookingConfirmation(data,result);form.reset();priceUpdate();paymentUpdate();loadMyBookings()}catch(err){toast(err instanceof TypeError?"Could not connect to the booking API. Check that the backend is running.":err.message||"Could not submit booking.")}finally{button.disabled=false;button.textContent="Submit Booking Request →"}
   });
   let toastTimer;function toast(message){const el=$("#toast");el.textContent=message;el.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),4500)}
   loadCatalog();paymentUpdate();onAuthStateChanged(firebaseAuth,()=>{restoreCustomerSession();});
