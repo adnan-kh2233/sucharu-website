@@ -1,0 +1,3 @@
+.contact-cards>*>span{display:grid;place-items:center;flex:0 0 32px;width:32px;height:32px}
+.contact-cards>*>span svg{display:block;width:25px;height:25px;fill:currentColor}
+.contact-cards>a:hover{border-color:var(--green);background:#f4f8f3}
