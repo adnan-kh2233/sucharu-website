@@ -1,6 +1,6 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
-const { all, collection, get, put } = require("../config/store");
+const { all, collection, get, put, remove } = require("../config/store");
 const { requireCustomer } = require("../middleware/auth");
 const { SERVICE_AREAS, TIME_WINDOWS, isValidFutureLocalDate, normalizeBangladeshMobile } = require("../utils/rules");
 const { notifyCustomer, tokenId } = require("../services/customer-notifications");
@@ -93,6 +93,38 @@ router.get("/bookings", async (req, res, next) => {
       .map(({ bookingId, service, schedule, area, address, landmark, location, paymentMethod, paymentStatus, status, createdAt, review, scheduleChangeCount, cancellationReason }) => ({
         bookingId, service: { name: service?.name }, schedule, area, address, landmark, location, paymentMethod, paymentStatus, status, createdAt, review, scheduleChangeCount, cancellationReason,
       })));
+  } catch (error) { next(error); }
+});
+
+router.get("/favorites", async (req, res, next) => {
+  try {
+    const favorites = (await all("customerFavorites"))
+      .filter(row => row.customerId === req.customer._id)
+      .sort((a, b) => String(a.createdAt || "").localeCompare(String(b.createdAt || "")))
+      .map(({ serviceId, createdAt }) => ({ serviceId, createdAt }));
+    return res.json(favorites);
+  } catch (error) { next(error); }
+});
+
+router.put("/favorites/:serviceId", async (req, res, next) => {
+  try {
+    const serviceId = String(req.params.serviceId || "").trim();
+    const service = serviceId && serviceId.length <= 120 ? await get("services", serviceId) : null;
+    if (!service || service.active !== true) return res.status(404).json({ message: "This service is not available to save right now." });
+    const id = crypto.createHash("sha256").update(`${req.customer._id}:${serviceId}`).digest("hex");
+    await put("customerFavorites", id, { customerId: req.customer._id, serviceId });
+    return res.json({ serviceId, saved: true, message: "Service saved to your favorites." });
+  } catch (error) { next(error); }
+});
+
+router.delete("/favorites/:serviceId", async (req, res, next) => {
+  try {
+    const serviceId = String(req.params.serviceId || "").trim();
+    if (!serviceId || serviceId.length > 120) return res.status(400).json({ message: "Choose a valid service." });
+    const id = crypto.createHash("sha256").update(`${req.customer._id}:${serviceId}`).digest("hex");
+    const favorite = await get("customerFavorites", id);
+    if (favorite && favorite.customerId === req.customer._id) await remove("customerFavorites", id);
+    return res.json({ serviceId, saved: false, message: "Service removed from your favorites." });
   } catch (error) { next(error); }
 });
 
