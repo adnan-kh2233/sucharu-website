@@ -95,7 +95,7 @@ async function changeStatus(id,button){
     const select=document.createElement("select");
     select.className="booking-status";
     select.setAttribute("aria-label",`Status for ${id}`);
-    ["booking_received","confirmed","assigned","on_the_way","service_started","completed","cancelled"].forEach(status=>{
+    ["booking_received","confirmed","assigned","on_the_way","service_started","awaiting_customer_confirmation","customer_issue_reported","completed","cancelled"].forEach(status=>{
       const option=document.createElement("option");
       option.value=status;
       option.textContent=status.replaceAll("_"," ");

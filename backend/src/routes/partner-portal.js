@@ -52,18 +52,17 @@ router.post("/jobs/:bookingId/complete",async(req,res,next)=>{try{
  const photo=(value)=>{if(value==null||value==="")return null;if(typeof value!=="string"||value.length>205000||!/^[A-Za-z0-9+/]*={0,2}$/.test(value))return false;const bytes=Buffer.from(value,"base64");return bytes.length<=150*1024&&bytes[0]===0xff&&bytes[1]===0xd8&&bytes[2]===0xff?value:false;};
  const beforeImage=photo(req.body?.beforeImage),afterImage=photo(req.body?.afterImage);
  if(beforeImage===false||afterImage===false)return res.status(400).json({message:"Each optional photo must be a valid compressed image no larger than 150 KB."});
- const proof={bookingId:booking.bookingId,customerId:booking.customerId,partnerId:req.partner._id,checklist:{workCompleted:true,areaChecked:true,followUpExplained:true},notes,beforeImage,afterImage,completedAt:new Date()};
+ const proof={bookingId:booking.bookingId,customerId:booking.customerId,partnerId:req.partner._id,checklist:{workCompleted:true,areaChecked:true,followUpExplained:true},notes,beforeImage,afterImage,reportedAt:new Date()};
  await put("bookingCompletionProofs",booking._id,proof);
- const updated=await put("bookings",booking._id,{status:"completed",serviceCompletedAt:new Date(),completionProofPresent:true},true);
+ const updated=await put("bookings",booking._id,{status:"awaiting_customer_confirmation",serviceCompletionReportAt:new Date(),completionProofPresent:true},true);
  await remove("bookingLocations",booking._id);
- await put("partners",req.partner._id,{completedJobs:Number(req.partner.completedJobs||0)+1},true);
- await notifyCustomer({customerId:booking.customerId,bookingId:booking.bookingId,type:"booking_status",title:"Service completed",body:`${booking.service?.name||"Your service"} is complete. Open the app to view the service report.`});
- return res.json({bookingId:updated.bookingId,status:updated.status,completedAt:updated.serviceCompletedAt,message:"Service report saved and booking completed."});
+ await notifyCustomer({customerId:booking.customerId,bookingId:booking.bookingId,type:"booking_confirmation_required",title:"Please confirm your service",body:`${booking.service?.name||"Your service"} report is ready. Review it and confirm the service or report a problem.`});
+ return res.json({bookingId:updated.bookingId,status:updated.status,message:"Service report submitted. Waiting for customer confirmation."});
 }catch(e){next(e);}});
 router.patch("/jobs/:bookingId/status",async(req,res,next)=>{try{
- const transitions={assigned:"on_the_way",on_the_way:"service_started",service_started:"completed"},booking=await get("bookings",req.params.bookingId);
+ const transitions={assigned:"on_the_way"},booking=await get("bookings",req.params.bookingId);
  if(!booking||booking.partner?.partnerId!==req.partner._id||booking.status==="cancelled")return res.status(404).json({message:"Assigned booking not found."});
- const nextStatus=transitions[booking.status];if(!nextStatus||req.body?.status!==nextStatus)return res.status(409).json({message:booking.status==="on_the_way"&&req.body?.status==="service_started"?"Verify the customer's start code before starting service.":booking.status==="service_started"&&req.body?.status==="completed"?"Submit a service completion report before completing the job.":"This booking cannot move to that status. Follow the listed service steps."});
+ const nextStatus=transitions[booking.status];if(!nextStatus||req.body?.status!==nextStatus)return res.status(409).json({message:booking.status==="on_the_way"&&req.body?.status==="service_started"?"Verify the customer's start code before starting service.":booking.status==="service_started"&&req.body?.status==="completed"?"Submit a service completion report; the customer must confirm it.":"This booking cannot move to that status. Follow the listed service steps."});
  await put("bookings",booking._id,{status:nextStatus},true);if(nextStatus!=="on_the_way")await remove("bookingLocations",booking._id);if(nextStatus==="completed")await put("partners",req.partner._id,{completedJobs:Number(req.partner.completedJobs||0)+1},true);const labels={on_the_way:"Your partner is on the way",service_started:"Your service has started",completed:"Your service is complete"};await notifyCustomer({customerId:booking.customerId,bookingId:booking.bookingId,type:"booking_status",title:labels[nextStatus],body:`${booking.service?.name||"Your service"} · ${labels[nextStatus]}.`});
  return res.json({bookingId:booking.bookingId,status:nextStatus});
 }catch(e){next(e);}});module.exports=router;

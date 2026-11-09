@@ -126,10 +126,39 @@ router.get("/bookings/:bookingId/completion-proof", async (req, res, next) => {
   try {
     const booking = await get("bookings", req.params.bookingId);
     if (!booking || booking.customerId !== req.customer._id) return res.status(404).json({ message: "Booking not found." });
-    if (booking.status !== "completed" || !booking.completionProofPresent) return res.status(404).json({ message: "No service report is available for this booking." });
+    if (!["awaiting_customer_confirmation", "customer_issue_reported", "completed"].includes(booking.status) || !booking.completionProofPresent) return res.status(404).json({ message: "No service report is available for this booking." });
     const proof = await get("bookingCompletionProofs", booking._id);
     if (!proof || proof.customerId !== req.customer._id || proof.partnerId !== booking.partner?.partnerId) return res.status(404).json({ message: "Service report not found." });
     return res.json({ bookingId: proof.bookingId, checklist: proof.checklist, notes: proof.notes, beforeImage: proof.beforeImage, afterImage: proof.afterImage, completedAt: proof.completedAt });
+  } catch (error) { next(error); }
+});
+
+router.post("/bookings/:bookingId/confirmation", async (req, res, next) => {
+  try {
+    const booking = await get("bookings", req.params.bookingId);
+    if (!booking || booking.customerId !== req.customer._id) return res.status(404).json({ message: "Booking not found." });
+    if (booking.status !== "awaiting_customer_confirmation" || !booking.completionProofPresent) return res.status(409).json({ message: "This booking is not waiting for customer confirmation." });
+    const action = String(req.body?.action || "");
+    if (action === "confirm") {
+      const updated = await put("bookings", booking._id, { status: "completed", customerConfirmation: { decision: "confirmed", confirmedAt: new Date() }, serviceCompletedAt: new Date() }, true);
+      const partner = booking.partner?.partnerId ? await get("partners", booking.partner.partnerId) : null;
+      if (partner) await put("partners", partner._id, { completedJobs: Number(partner.completedJobs || 0) + 1 }, true);
+      if (booking.partner?.partnerId) await notifyCustomer({ customerId: booking.customerId, bookingId: booking.bookingId, type: "booking_customer_confirmed", title: "Service confirmed", body: "Thank you for confirming the completed service. You can now leave a review." });
+      return res.json({ bookingId: updated.bookingId, status: updated.status, message: "Service confirmed. You can now rate your partner." });
+    }
+    if (action !== "report_issue") return res.status(400).json({ message: "Choose confirm or report a problem." });
+    const reason = String(req.body?.reason || "").trim();
+    if (reason.length < 10 || reason.length > 1500) return res.status(400).json({ message: "Describe the problem in 10 to 1500 characters." });
+    const ticketDocumentId = collection("supportTickets").doc().id;
+    const ticketId = `ST-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
+    await put("supportTickets", ticketDocumentId, {
+      ticketId, customerId: req.customer._id, customer: { name: req.customer.name, phone: req.customer.phone, email: req.customer.email || "" },
+      bookingId: booking.bookingId, category: "service_completion", subject: `Service completion concern · ${booking.bookingId}`,
+      message: reason, status: "open", lastReply: "", type: "service_completion_issue",
+    });
+    const updated = await put("bookings", booking._id, { status: "customer_issue_reported", customerConfirmation: { decision: "issue_reported", reportedAt: new Date(), ticketId } }, true);
+    await notifyCustomer({ customerId: booking.customerId, bookingId: booking.bookingId, type: "booking_issue_received", title: "Your concern was sent to Sucharu", body: `Support request ${ticketId} is open. The booking will stay pending while the team follows up.` });
+    return res.status(201).json({ bookingId: updated.bookingId, status: updated.status, ticketId, message: "Your concern was sent to Sucharu. This booking will remain pending while the team follows up." });
   } catch (error) { next(error); }
 });
 
