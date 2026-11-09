@@ -20,6 +20,13 @@ router.post("/", async (req,res,next) => {
     return res.status(201).json(await put("partners",id,{partnerId,name,phone,category,area,...optional,monthlyIncome:monthlyIncome?Number(monthlyIncome):null,skills,availableDays,availableTimes,experienceYears:Number(body.experienceYears||0),hasTools:Boolean(body.hasTools),emergencyAvailable:Boolean(body.emergencyAvailable),portalEnabled:false,lastPortalLoginAt:null,verificationStatus:"pending",status:"inactive",completedJobs:0}));
   }catch(e){next(e);}
 });
+router.post("/:id/verify", async(req,res,next)=>{
+  try{
+    const partner=await get("partners",req.params.id);
+    if(!partner)return res.status(404).json({message:"Partner not found."});
+    return res.json(publicPartner(await put("partners",partner._id,{verificationStatus:"verified"},true)));
+  }catch(e){next(e);}
+});
 router.patch("/:id", async(req,res,next)=>{
   try{
     const partner=await get("partners",req.params.id); if(!partner)return res.status(404).json({message:"Partner not found."});
