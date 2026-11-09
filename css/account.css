@@ -19,6 +19,7 @@
 #addressMap{height:min(58vh,560px);min-height:300px;border-radius:10px;z-index:1}
 .my-bookings{max-height:280px;overflow:auto;margin:12px 0 18px}
 .my-booking{padding:12px;border:1px solid var(--line);border-radius:9px;margin:8px 0}
+.customer-invoice{margin-top:10px;padding:10px;border-radius:9px;background:var(--cream);color:var(--ink)}.customer-invoice summary{cursor:pointer;font-weight:700;color:var(--green)}.invoice-breakdown p{display:flex;justify-content:space-between;gap:12px;margin:7px 0;font-size:.88rem}.invoice-breakdown .invoice-total{padding-top:8px;border-top:1px solid var(--line);font-size:1rem}.invoice-note{display:block!important;padding-top:7px;border-top:1px solid var(--line)}
 .my-booking strong,.my-booking span{display:block}
 .my-booking span{font-size:.84rem;color:var(--muted)}
 .account-section-head{display:flex;justify-content:space-between;align-items:center;gap:12px}.account-section-head h3{margin:0}.account-section-head .secondary-btn{padding:8px 12px}

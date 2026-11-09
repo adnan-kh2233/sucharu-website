@@ -78,8 +78,9 @@ async function loadBookings(){
       <td><b>${escapeHTML(b.bookingId)}</b></td><td>${escapeHTML(b.customer?.name)}<br>${escapeHTML(b.customer?.phone)}</td><td>${escapeHTML(b.service?.name)}</td>
       <td>${escapeHTML(b.schedule?.date||"-")}<br>${escapeHTML(b.schedule?.time||"-")}</td><td><span class="badge">${escapeHTML(b.status)}</span></td>
       <td><div class="inline-controls"><select class="booking-partner" aria-label="Partner for ${escapeHTML(b.bookingId)}" ${canAssign?"":"disabled"}>${options}</select><button class="action assign-partner" data-booking-id="${escapeHTML(b.bookingId)}" ${canAssign?"":"disabled"}>Save</button></div></td>
-      <td><button class="action" onclick="changeStatus('${escapeHTML(b.bookingId)}',this)">Update status</button></td></tr>`;
+      <td><button class="action" onclick="changeStatus('${escapeHTML(b.bookingId)}',this)">Update status</button> <button class="action invoice-booking" data-booking-id="${escapeHTML(b.bookingId)}" ${b.status==="completed"?"":"disabled"}>${b.invoice?"Edit invoice":"Create invoice"}</button></td></tr>`;
     }).join("");
+    $("#bookingRows").querySelectorAll(".invoice-booking").forEach(button=>button.onclick=()=>editBookingInvoice(rows.find(item=>String(item.bookingId)===button.dataset.bookingId)));
     $("#bookingRows").querySelectorAll(".assign-partner").forEach(button=>button.onclick=async()=>{
       const row=button.closest("tr");
       const partnerId=row.querySelector(".booking-partner").value;
@@ -87,6 +88,22 @@ async function loadBookings(){
       catch(error){alert(error.message)}
     });
   }catch(error){$("#bookingRows").innerHTML=`<tr><td colspan="7">${escapeHTML(error.message)}</td></tr>`}
+}
+async function editBookingInvoice(booking){
+  if(!booking)return;
+  const current=booking.invoice||{},service=Number(current.serviceCharge??booking.service?.estimatedPrice??0);
+  const ask=(label,value)=>window.prompt(`${label} (BDT)`,String(value));
+  const serviceCharge=ask("Service charge",service);if(serviceCharge===null)return;
+  const laborCharge=ask("Labor charge",current.laborCharge||0);if(laborCharge===null)return;
+  const materialsCharge=ask("Materials charge",current.materialsCharge||0);if(materialsCharge===null)return;
+  const discount=ask("Discount",current.discount||0);if(discount===null)return;
+  const note=window.prompt("Invoice note (optional)",current.note||"");if(note===null)return;
+  const paymentStatus=window.prompt("Payment status: unpaid or paid",booking.paymentStatus||"unpaid");if(paymentStatus===null)return;
+  try{
+    await api(`/bookings/${encodeURIComponent(booking.bookingId)}/invoice`,{method:"PATCH",body:JSON.stringify({serviceCharge:Number(serviceCharge),laborCharge:Number(laborCharge),materialsCharge:Number(materialsCharge),discount:Number(discount),note,paymentStatus:paymentStatus.trim().toLowerCase()})});
+    await loadBookings();
+    alert("Invoice saved and customer notified.");
+  }catch(error){alert(error.message)}
 }
 async function changeStatus(id,button){
   const statusSelect=button.parentElement.querySelector(".booking-status");
