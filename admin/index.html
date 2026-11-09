@@ -22,6 +22,7 @@
     <button data-tab="bookings">Bookings</button>
     <button data-tab="partners">Partners</button>
     <button data-tab="services">Services</button>
+    <button data-tab="support">Support requests</button>
     <button id="logout">Logout</button>
   </aside>
   <main>
@@ -46,6 +47,10 @@
       <div class="toolbar"><h2>Services & Pricing</h2><button id="refreshServices">Refresh</button></div>
       <div class="table-wrap"><table><thead><tr><th>Service</th><th>Category</th><th>Customer</th><th>Worker</th><th>Margin</th><th>Active</th><th>Action</th></tr></thead><tbody id="serviceRows"></tbody></table></div>
     </section>
+    <section id="support" class="tab" hidden>
+      <div class="toolbar"><div><h2>Customer support</h2><small>Replies are sent to the customer's Sucharu notification inbox.</small></div><button id="refreshSupport">Refresh</button></div>
+      <div class="table-wrap"><table><thead><tr><th>Request</th><th>Customer</th><th>Message</th><th>Status</th><th>Reply</th></tr></thead><tbody id="supportRows"></tbody></table></div>
+    </section>
   </main>
 </div>
 
@@ -58,6 +63,6 @@
 <label><input name="emergencyAvailable" type="checkbox"> Emergency availability</label>
 <button>Add Partner</button></form></div></div>
 <div id="portalModal" class="modal-bg" hidden><div class="panel modal"><button id="closePortalModal" type="button">×</button><h2>Set Partner Portal Password</h2><p>Partner-কে password আলাদা করে নিরাপদভাবে দিন। এখানে পাঠাবেন না।</p><form id="portalForm"><input name="password" type="password" minlength="12" maxlength="200" autocomplete="new-password" placeholder="At least 12 characters" required><button>Enable portal access</button><div id="portalError" role="status"></div></form></div></div>
-<script src="admin.js?v=10"></script>
+<script src="admin.js?v=11"></script>
 </body>
 </html>

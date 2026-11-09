@@ -9,6 +9,7 @@ const partnerRoutes = require("./routes/partners");
 const dashboardRoutes = require("./routes/dashboard");
 const partnerPortalRoutes = require("./routes/partner-portal");
 const customerRoutes = require("./routes/customers");
+const supportRoutes = require("./routes/support");
 const { notFound, errorHandler } = require("./middleware/errors");
 
 function validateConfig() {
@@ -43,6 +44,7 @@ function createApp() {
   app.use("/api/partners", partnerRoutes);
   app.use("/api/partner", partnerPortalRoutes);
   app.use("/api/customers", customerRoutes);
+  app.use("/api/support", supportRoutes);
   app.use("/api/dashboard", dashboardRoutes);
   app.use("/api", notFound);
   app.use(errorHandler);

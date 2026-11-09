@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="css/style.css?v=3">
-  <link rel="stylesheet" href="css/account.css?v=1">
+  <link rel="stylesheet" href="css/account.css?v=2">
 </head>
 <body>
 
@@ -351,8 +351,26 @@
           <div id="addressMessage" class="account-message" role="status"></div>
         </form>
       </section>
+      <section class="saved-address-panel customer-notification-panel">
+        <div class="account-section-head"><h3>Booking notifications</h3><button id="refreshCustomerNotifications" class="secondary-btn" type="button">Refresh</button></div>
+        <p id="unreadNotificationCount" class="account-contact">Updates about your service requests appear here.</p>
+        <div id="customerNotifications" class="customer-notifications" aria-live="polite"></div>
+      </section>
       <h3>My bookings</h3>
       <div id="myBookings" class="my-bookings">Loading bookings…</div>
+      <section class="saved-address-panel support-panel">
+        <h3>Help & support</h3>
+        <p class="account-contact">Send a request to the Sucharu team and check replies here.</p>
+        <form id="customerSupportForm">
+          <label>Topic<select name="category"><option value="general">General</option><option value="booking">Booking</option><option value="payment">Payment</option><option value="partner">Service partner</option><option value="other">Other</option></select></label>
+          <label>Subject<input name="subject" maxlength="120" required placeholder="What do you need help with?"></label>
+          <label>Booking ID (optional)<input name="bookingId" maxlength="32" placeholder="SU-YYYYMMDD-ABC123"></label>
+          <label>Message<textarea name="message" rows="4" minlength="10" maxlength="2000" required placeholder="Describe the issue (10–2000 characters)"></textarea></label>
+          <button class="primary-btn full" type="submit">Send support request</button>
+          <div id="customerSupportMessage" class="account-message" role="status"></div>
+        </form>
+        <div id="customerSupportTickets" class="customer-support-tickets"></div>
+      </section>
       <button id="customerLogout" class="secondary-btn full" type="button">Sign out</button>
     </div>
   </section>
@@ -372,6 +390,6 @@
 <div class="toast" id="toast"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script type="module" src="js/main.js?v=10"></script>
+<script type="module" src="js/main.js?v=11"></script>
 </body>
 </html>

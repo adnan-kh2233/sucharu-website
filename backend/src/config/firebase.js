@@ -1,6 +1,7 @@
 const { applicationDefault, cert, getApps, initializeApp } = require("firebase-admin/app");
 const { getAuth } = require("firebase-admin/auth");
 const { getFirestore } = require("firebase-admin/firestore");
+const { getMessaging } = require("firebase-admin/messaging");
 const fs = require("node:fs");
 
 const APP_NAME = "sucharu-firebase-admin";
@@ -34,9 +35,13 @@ function getFirestoreDb() {
   return getFirestore(getFirebaseApp());
 }
 
+function getFirebaseMessaging() {
+  return getMessaging(getFirebaseApp());
+}
+
 async function createCustomerCustomToken(customer) {
   if (!customer?._id) throw new Error("A saved customer is required to create a Firebase session.");
   return getFirebaseAuth().createCustomToken(String(customer._id), { role: "customer" });
 }
 
-module.exports = { createCustomerCustomToken, getFirebaseAuth, getFirestoreDb };
+module.exports = { createCustomerCustomToken, getFirebaseAuth, getFirebaseMessaging, getFirestoreDb };

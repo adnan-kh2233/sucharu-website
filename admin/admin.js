@@ -33,6 +33,7 @@ document.querySelectorAll("aside [data-tab]").forEach(b=>b.onclick=()=>{
   if(b.dataset.tab==="bookings")loadBookings();
   if(b.dataset.tab==="partners")loadPartners();
   if(b.dataset.tab==="services")loadServices();
+  if(b.dataset.tab==="support")loadSupportTickets();
 });
 
 async function loadDashboard(){
@@ -160,6 +161,25 @@ async function loadServices(){
     return `<tr><td>${escapeHTML(s.icon||"")} ${escapeHTML(s.name)}</td><td>${escapeHTML(s.category)}</td><td>${quote?"Quote required":`৳${customerPrice}`}</td><td>${s.workerPayment==null?"—":`৳${workerPayment}`}</td><td class="margin">${quote||s.workerPayment==null?"—":`৳${customerPrice-workerPayment}`}</td><td>${s.active?"Yes":"No"}</td><td><button class="action" onclick="editService('${escapeHTML(s._id)}',${customerPrice},${workerPayment},'${escapeHTML(s.pricingModel)}')">Edit</button></td></tr>`;
   }).join("");
 }
+async function loadSupportTickets(){
+  const target=$("#supportRows");target.innerHTML='<tr><td colspan="5">Loading requests…</td></tr>';
+  try{
+    const rows=await api("/support/tickets");
+    if(!rows.length){target.innerHTML='<tr><td colspan="5">No support requests yet.</td></tr>';return;}
+    target.innerHTML=rows.map(ticket=>`<tr data-ticket-id="${escapeHTML(ticket._id)}">
+      <td><b>${escapeHTML(ticket.ticketId)}</b><br>${escapeHTML(ticket.category)}${ticket.bookingId?`<br>Booking ${escapeHTML(ticket.bookingId)}`:""}<br><small>${escapeHTML(ticket.createdAt||"")}</small></td>
+      <td>${escapeHTML(ticket.customer?.name)}<br>${escapeHTML(ticket.customer?.phone)}<br>${escapeHTML(ticket.customer?.email)}</td>
+      <td><b>${escapeHTML(ticket.subject)}</b><br>${escapeHTML(ticket.message)}</td>
+      <td><select class="ticket-status"><option value="open" ${ticket.status==="open"?"selected":""}>Open</option><option value="in_progress" ${ticket.status==="in_progress"?"selected":""}>In progress</option><option value="resolved" ${ticket.status==="resolved"?"selected":""}>Resolved</option></select>${ticket.lastReply?`<p><small>Last reply:</small><br>${escapeHTML(ticket.lastReply)}</p>`:""}</td>
+      <td><textarea class="ticket-reply" maxlength="1500" placeholder="Optional reply to customer"></textarea><button class="action save-ticket">Save / reply</button></td>
+    </tr>`).join("");
+    target.querySelectorAll(".save-ticket").forEach(button=>button.onclick=async()=>{
+      const row=button.closest("tr"),ticketId=row.dataset.ticketId,reply=row.querySelector(".ticket-reply").value.trim(),status=row.querySelector(".ticket-status").value;
+      button.disabled=true;try{await api(`/support/tickets/${encodeURIComponent(ticketId)}`,{method:"PATCH",body:JSON.stringify({status,reply})});await loadSupportTickets();}
+      catch(error){alert(error.message);button.disabled=false;}
+    });
+  }catch(error){target.innerHTML=`<tr><td colspan="5">${escapeHTML(error.message)}</td></tr>`;}
+}
 async function editService(id,c,w,currentModel="fixed"){
   if(!/^[a-f\d]{24}$/i.test(id))return;
   const pricingModel=prompt("Pricing model: fixed or quote",currentModel);
@@ -175,7 +195,7 @@ async function editService(id,c,w,currentModel="fixed"){
   if(!Number.isFinite(Number(customer))||Number(customer)<0){alert("Enter a valid non-negative customer price estimate.");return;}
   try{await api("/services/"+id,{method:"PATCH",body:JSON.stringify({pricingModel:"fixed",startingPrice:Number(customer),workerPayment:Number(worker)})});loadServices();}catch(err){alert(err.message)}
 }
-$("#refreshBookings").onclick=loadBookings;$("#refreshServices").onclick=loadServices;
+$("#refreshBookings").onclick=loadBookings;$("#refreshServices").onclick=loadServices;$("#refreshSupport").onclick=loadSupportTickets;
 $("#newPartner").onclick=()=>$("#modal").hidden=false;$("#closeModal").onclick=()=>$("#modal").hidden=true;
 $("#closePortalModal").onclick=()=>$("#portalModal").hidden=true;
 $("#portalForm").addEventListener("submit",async e=>{

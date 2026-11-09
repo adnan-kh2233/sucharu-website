@@ -42,6 +42,8 @@ const firebaseAuth = getAuth(firebaseApp);
       renderCustomerProfile();
       renderSavedAddress();
       loadMyBookings();
+      loadCustomerNotifications();
+      loadCustomerSupportTickets();
     }
     updateAccountButton();
   }
@@ -144,8 +146,43 @@ const firebaseAuth = getAuth(firebaseApp);
       if(!response.ok)throw new Error(rows.message||"Could not load bookings.");
       if(!rows.length){container.textContent="No bookings yet.";return;}
       const statusLabels={booking_received:"Request received",confirmed:"Confirmed",assigned:"Partner assigned",on_the_way:"Partner on the way",service_started:"Service started",completed:"Completed",cancelled:"Cancelled"};
-      container.innerHTML=rows.map(row=>`<article class="my-booking"><strong>${esc(row.service?.name||"Service")} · ${esc(row.bookingId)}</strong><span>${esc(statusLabels[row.status]||row.status)} · ${esc(row.schedule?.date||"")} · ${esc(row.schedule?.time||"")}</span><span>${esc(row.area||"")}</span></article>`).join("");
+      container.innerHTML=rows.map(row=>{
+        const id=esc(row.bookingId),status=row.status,manageable=["booking_received","confirmed"].includes(status),review=row.review;
+        const schedule=row.schedule||{};
+        return `<article class="my-booking" data-booking-card="${id}"><strong>${esc(row.service?.name||"Service")} · ${id}</strong><span>${esc(statusLabels[status]||status)} · ${esc(schedule.date||"")} · ${esc(schedule.time||"")}</span><span>${esc(row.area||"")}</span>
+          ${manageable?`<div class="booking-manage-actions"><button type="button" class="secondary-btn" data-toggle-reschedule>Change time</button><button type="button" class="secondary-btn danger-action" data-cancel-booking>Cancel</button></div><form class="reschedule-form" data-reschedule-form hidden><label>New date<input name="date" type="date" required min="${esc(new Date().toISOString().slice(0,10))}"></label><label>Time window<select name="time" required><option value="09:00 AM - 11:00 AM">09:00 AM - 11:00 AM</option><option value="11:00 AM - 01:00 PM">11:00 AM - 01:00 PM</option><option value="02:00 PM - 04:00 PM">02:00 PM - 04:00 PM</option><option value="04:00 PM - 06:00 PM">04:00 PM - 06:00 PM</option><option value="06:00 PM - 08:00 PM">06:00 PM - 08:00 PM</option></select></label><button class="primary-btn full" type="submit">Save new schedule</button><p class="account-message" role="status"></p></form>`:""}
+          ${status==="completed"&&!review?`<form class="review-form"><label>Rating<select name="rating" required><option value="5">★★★★★ · Excellent</option><option value="4">★★★★ · Good</option><option value="3">★★★ · Okay</option><option value="2">★★ · Poor</option><option value="1">★ · Very poor</option></select></label><label>Your review<textarea name="comment" maxlength="1000" rows="2" placeholder="Optional feedback"></textarea></label><button class="primary-btn full" type="submit">Submit rating</button><p class="account-message" role="status"></p></form>`:""}
+          ${review?`<p class="my-booking-review">Your rating · ${Number(review.rating)||0}/5${review.comment?`<br>${esc(review.comment)}`:""}</p>`:""}</article>`;
+      }).join("");
+      container.querySelectorAll("[data-toggle-reschedule]").forEach(button=>button.addEventListener("click",()=>{const form=button.closest("article").querySelector("[data-reschedule-form]");form.hidden=!form.hidden;}));
+      container.querySelectorAll("[data-cancel-booking]").forEach(button=>button.addEventListener("click",async()=>{
+        if(!window.confirm("Cancel this booking? You can cancel it before a partner is assigned."))return;
+        button.disabled=true;try{const token=await customerBearerToken(),card=button.closest("article"),id=card.dataset.bookingCard,response=await fetch(`${API}/customers/bookings/${encodeURIComponent(id)}/cancel`,{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({})}),payload=await response.json().catch(()=>({}));if(!response.ok)throw new Error(payload.message||"Could not cancel this booking.");toast(payload.message||"Booking cancelled.");loadMyBookings();}catch(error){toast(error.message||"Could not cancel this booking.");button.disabled=false;}
+      }));
+      container.querySelectorAll("[data-reschedule-form]").forEach(form=>form.addEventListener("submit",async e=>{
+        e.preventDefault();const button=form.querySelector("button[type=submit]"),message=form.querySelector("[role=status]"),data=Object.fromEntries(new FormData(form)),id=form.closest("article").dataset.bookingCard;button.disabled=true;message.textContent="Saving…";
+        try{const token=await customerBearerToken(),response=await fetch(`${API}/customers/bookings/${encodeURIComponent(id)}/schedule`,{method:"PATCH",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify(data)}),payload=await response.json().catch(()=>({}));if(!response.ok)throw new Error(payload.message||"Could not reschedule.");toast(payload.message||"Booking rescheduled.");loadMyBookings();loadCustomerNotifications();}catch(error){message.textContent=error.message||"Could not reschedule.";button.disabled=false;}
+      }));
+      container.querySelectorAll(".review-form").forEach(form=>form.addEventListener("submit",async e=>{
+        e.preventDefault();const button=form.querySelector("button[type=submit]"),message=form.querySelector("[role=status]"),data=Object.fromEntries(new FormData(form)),id=form.closest("article").dataset.bookingCard;button.disabled=true;message.textContent="Sending…";
+        try{const token=await customerBearerToken(),response=await fetch(`${API}/customers/bookings/${encodeURIComponent(id)}/review`,{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify(data)}),payload=await response.json().catch(()=>({}));if(!response.ok)throw new Error(payload.message||"Could not submit your review.");toast(payload.message||"Thank you for your review.");loadMyBookings();}catch(error){message.textContent=error.message||"Could not submit your review.";button.disabled=false;}
+      }));
     }catch(error){container.textContent=error.message;}
+  }
+  async function loadCustomerNotifications(){
+    const container=$("#customerNotifications"),count=$("#unreadNotificationCount");if(!container||!customerToken)return;
+    try{const token=await customerBearerToken(),response=await fetch(`${API}/customers/notifications`,{headers:{Authorization:`Bearer ${token}`}}),rows=await response.json().catch(()=>[]);if(!response.ok)throw new Error(rows.message||"Could not load notifications.");
+      const unread=rows.filter(row=>!row.readAt).length;count.textContent=unread?`${unread} unread update${unread===1?"":"s"}. Tap an update to mark it read.`:"You are all caught up.";
+      if(!rows.length){container.innerHTML='<p class="empty-state">Booking and support updates will appear here.</p>';return;}
+      container.innerHTML=rows.map(row=>`<button class="customer-notification${row.readAt?" read":" unread"}" type="button" data-notification-id="${esc(row.id)}"><strong>${esc(row.title)}</strong><span>${esc(row.body)}</span><small>${esc(row.bookingId||row.type)}</small></button>`).join("");
+      container.querySelectorAll("[data-notification-id]").forEach(button=>button.addEventListener("click",async()=>{if(button.classList.contains("read"))return;try{const token=await customerBearerToken();await fetch(`${API}/customers/notifications/${encodeURIComponent(button.dataset.notificationId)}/read`,{method:"PATCH",headers:{Authorization:`Bearer ${token}`}});button.classList.remove("unread");button.classList.add("read");loadCustomerNotifications();}catch{}}));
+    }catch(error){container.textContent=error.message||"Could not load notifications.";}
+  }
+  async function loadCustomerSupportTickets(){
+    const container=$("#customerSupportTickets");if(!container||!customerToken)return;
+    try{const token=await customerBearerToken(),response=await fetch(`${API}/customers/support`,{headers:{Authorization:`Bearer ${token}`}}),rows=await response.json().catch(()=>[]);if(!response.ok)throw new Error(rows.message||"Could not load support requests.");
+      container.innerHTML=rows.length?`<h4>Recent requests</h4>${rows.map(ticket=>`<article class="support-ticket"><strong>${esc(ticket.subject)} · ${esc(ticket.ticketId)}</strong><span>${esc(ticket.status.replaceAll("_"," "))}${ticket.bookingId?` · ${esc(ticket.bookingId)}`:""}</span>${ticket.lastReply?`<p>${esc(ticket.lastReply)}</p>`:""}</article>`).join("")}`:"";
+    }catch(error){container.textContent=error.message||"Could not load support requests.";}
   }
   function render() {
     const q = search.value.trim().toLowerCase();
@@ -307,6 +344,13 @@ const firebaseAuth = getAuth(firebaseApp);
     finally{button.disabled=false;button.textContent="Create account";}
   });
   $("#customerLogout").addEventListener("click",async()=>{await clearCustomerSession(true);showAccountView();setAccountForm("login")});
+  $("#refreshCustomerNotifications").addEventListener("click",loadCustomerNotifications);
+  $("#customerSupportForm").addEventListener("submit",async e=>{
+    e.preventDefault();const form=e.currentTarget,button=form.querySelector("button[type=submit]"),message=$("#customerSupportMessage"),data=Object.fromEntries(new FormData(form));button.disabled=true;button.textContent="Sending…";message.textContent="";
+    try{const token=await customerBearerToken(),response=await fetch(`${API}/customers/support`,{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify(data)}),payload=await response.json().catch(()=>({}));if(!response.ok)throw new Error(payload.message||"Could not send your request.");form.reset();message.textContent=`Request ${payload.ticketId} sent. The Sucharu team will follow up.`;loadCustomerSupportTickets();}
+    catch(error){message.textContent=error instanceof TypeError?"Could not connect. Check your internet connection.":error.message||"Could not send your request.";}
+    finally{button.disabled=false;button.textContent="Send support request";}
+  });
   $("#toggleProfileEditor").addEventListener("click",()=>{const form=$("#customerProfileForm");if(form.hidden){renderCustomerProfile();$("#profileMessage").textContent="";form.hidden=false;}else form.hidden=true;});
   $("#customerProfileForm").addEventListener("submit",async e=>{
     e.preventDefault();const form=e.currentTarget,button=form.querySelector('[type="submit"]'),message=$("#profileMessage"),data=Object.fromEntries(new FormData(form));
