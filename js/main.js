@@ -5,7 +5,7 @@ import { firebaseConfig } from "./firebase-config.js";
 const firebaseApp = initializeApp(firebaseConfig);
 const firebaseAuth = getAuth(firebaseApp);
 (() => {
-  const API = window.SUCHARU_API_URL || "http://localhost:5000/api";
+  const API = window.SUCHARU_API_URL || "https://sucharu-api.onrender.com/api";
   const exampleCatalog = [
     {name:"Home Cleaning",category:"Cleaning",icon:"🧹",price:1500,description:"Starting estimate for a small home. Final price depends on size and scope."},
     {name:"Bathroom Cleaning",category:"Cleaning",icon:"🧽",price:1000,description:"Starting estimate for one bathroom. Final scope confirmed before service."},
