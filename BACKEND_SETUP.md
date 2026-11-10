@@ -21,11 +21,14 @@ SMTP_SECURE=false
 SMTP_USER=<verified-sender-email>
 SMTP_PASS=<provider-app-password-or-smtp-credential>
 SMTP_FROM=Sucharu <verified-sender-email>
+BREVO_API_KEY=<brevo-api-key>
+BREVO_SENDER_EMAIL=<verified-sender-email>
+BREVO_SENDER_NAME=Sucharu
 ```
 
 Use the real local values already configured in your private `.env`; never share these credentials in chat. `CUSTOMER_AUTH_MODE=legacy` keeps the existing web/API customer session format while customer and business records are stored in Firestore. The backend can issue a Firebase custom token when set to `firebase`, but the web and Android clients must sign in with that token before enabling that mode.
 
-Customer registration requires a valid email address, and that email must be unique. Forgot Password sends a six-digit code through SMTP; codes expire after 10 minutes, allow five attempts, and can be requested at most once per minute (five times per hour per email). Configure a verified sender and SMTP app credential in the private `backend/.env` before this feature can send mail. For Gmail, use a Google app password with 2-Step Verification; never put the normal account password in `.env` or share SMTP credentials in chat. Restart the API after changing SMTP settings. Existing accounts without an email need their profile email added before they can use recovery.
+Customer registration requires a valid email address, and that email must be unique. Forgot Password sends a six-digit code; codes expire after 10 minutes, allow five attempts, and can be requested at most once per minute (five times per hour per email). Render Free blocks SMTP ports, so the deployed service sends through Brevo's HTTPS transactional email API when `BREVO_API_KEY` and a verified `BREVO_SENDER_EMAIL` are set. SMTP remains available for local development. Keep provider credentials private and never paste them in chat. Existing accounts without an email need their profile email added before they can use recovery.
 
 In Firebase Console, verify Firestore is enabled in project `sucharu-87667`. Admin SDK access uses the service account and bypasses client Firestore rules; keep the key private and use restrictive client rules for direct client access.
 
@@ -57,7 +60,7 @@ For a cable-free school demo without Google Cloud prepayment, this repository in
 
 In the Render Dashboard, create a Blueprint from this GitHub repository and select `render.yaml`. Choose the Free plan. Do not add a payment method. After Render creates the service, open **Environment** and upload the private `backend/secrets/firebase-admin.json` as a secret file named `firebase-admin.json`. The Blueprint sets `GOOGLE_APPLICATION_CREDENTIALS` to Render's `/etc/secrets/firebase-admin.json` path. Enter the local `JWT_SECRET`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` values individually in Render's Environment settings; do not put them in this repository or paste them into chat. Do not upload the whole `.env` file.
 
-The free service sleeps after 15 minutes without requests and may take about one minute to wake up. Free-plan limits can suspend the service instead of billing when no payment method is attached. This is suitable for a low-traffic demo, not an always-on production service. The existing password-reset email implementation uses SMTP; Render Free blocks SMTP ports 25, 465, and 587, so email-code recovery will need an HTTPS email API or another compatible free method before it can work there.
+The free service sleeps after 15 minutes without requests and may take about one minute to wake up. Free-plan limits can suspend the service instead of billing when no payment method is attached. This is suitable for a low-traffic demo, not an always-on production service. For password reset on Render Free, create a Brevo account, activate transactional email, verify a sender email, then set `BREVO_API_KEY` and `BREVO_SENDER_EMAIL` in the Render Environment page. Brevo documents its free plan as $0 with 300 email sends per day; sending still depends on completing its account and sender verification. Do not add SMTP credentials to Render Free because outbound SMTP ports are blocked.
 
 After the first successful deploy, use its HTTPS service URL as the Android API base URL. From the Android project folder, build an installable debug APK with:
 
