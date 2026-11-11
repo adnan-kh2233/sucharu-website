@@ -1,0 +1,34 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() { return request.auth != null; }
+    function role(value) { return signedIn() && request.auth.token.role == value; }
+    function bookingPath(bookingId) {
+      return /databases/(default)/documents/bookings/$(bookingId);
+    }
+
+    match /customers/{customerId}/profile/{fileName} {
+      allow read: if role('customer') && request.auth.uid == customerId;
+      allow write: if role('customer') && request.auth.uid == customerId
+        && request.resource != null
+        && request.resource.size <= 2 * 1024 * 1024
+        && request.resource.contentType.matches('image/(jpeg|png|webp)');
+    }
+
+    match /partners/{partnerId}/bookings/{bookingId}/completion/{fileName} {
+      function booking() { return firestore.get(bookingPath(bookingId)).data; }
+      function assignedPartner() {
+        return role('partner') && request.auth.uid == partnerId
+          && firestore.exists(bookingPath(bookingId))
+          && booking().partner.partnerId == partnerId;
+      }
+      allow read: if signedIn() && firestore.exists(bookingPath(bookingId))
+        && ((request.auth.token.role == 'customer' && booking().customerId == request.auth.uid)
+          || (request.auth.token.role == 'partner' && booking().partner.partnerId == request.auth.uid));
+      allow write: if assignedPartner() && booking().status == 'service_started'
+        && request.resource != null
+        && request.resource.size <= 2 * 1024 * 1024
+        && request.resource.contentType.matches('image/(jpeg|png|webp)');
+    }
+  }
+}

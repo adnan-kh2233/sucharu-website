@@ -1,0 +1,10 @@
+{
+  "rules": {
+    "livePartnerLocations": {
+      "$bookingId": {
+        ".read": "auth != null && data.child('customerUid').val() === auth.uid && now - data.child('updatedAt').val() < 120000",
+        ".write": false
+      }
+    }
+  }
+}

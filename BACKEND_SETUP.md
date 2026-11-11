@@ -30,9 +30,17 @@ Use the real local values already configured in your private `.env`; never share
 
 Customer registration requires a valid email address, and that email must be unique. Forgot Password sends a six-digit code; codes expire after 10 minutes, allow five attempts, and can be requested at most once per minute (five times per hour per email). Render Free blocks SMTP ports, so the deployed service sends through Brevo's HTTPS transactional email API when `BREVO_API_KEY` and a verified `BREVO_SENDER_EMAIL` are set. SMTP remains available for local development. Keep provider credentials private and never paste them in chat. Existing accounts without an email need their profile email added before they can use recovery.
 
-In Firebase Console, verify Firestore is enabled in project `sucharu-87667`. Admin SDK access uses the service account and bypasses client Firestore rules; keep the key private and use restrictive client rules for direct client access.
+In Firebase Console, verify Firestore is enabled in project `sucharu-87667`. Customer profiles, saved services, booking history, bookings, partner assignments, notifications and service reports already use Firestore through the authenticated Express API. Android and the website share these API routes; the Admin SDK writes the records and bypasses client Firestore rules. Keep direct Firestore client access denied.
 
-The repository includes `firestore.rules` and `firebase.json`. The current rule set denies all direct Firestore access from Android, web, and other client SDKs because clients should use the Express API. The API's Firebase Admin SDK is server-side and bypasses these rules. Before releasing the rules, select the intended Firebase project with the Firebase CLI and review the project shown by `firebase use`; then deploy only the rules with `firebase deploy --only firestore:rules`. Do not deploy to production until the selected project is confirmed.
+The repository includes `firestore.rules`, `database.rules.json` and `firebase.json`. Firestore denies direct client access; Realtime Database permits customers to read only their own active booking's live partner location, while all writes remain server-only. Before releasing rules, select project `sucharu-87667` with Firebase CLI and verify `firebase use`. Create a Realtime Database in that project, then deploy with `firebase deploy --only firestore:rules,database`.
+
+## Android Firebase sessions and live partner map
+
+The shared website remains on `CUSTOMER_AUTH_MODE=legacy`. After customer sign-in, Android exchanges its existing API session at `/api/auth/customer/firebase-session` for a Firebase custom-token session. This preserves the website login flow and associates Firebase UID with the existing Firestore customer document ID. The exchange endpoint must be deployed before Android's Firebase session upgrade is available; API-based sign-in and booking access continue to work while it is unavailable.
+
+Realtime Database is used only to deliver live partner coordinates during an assigned `on_the_way` booking. The partner app sends each location to the authenticated API; the API validates assignment and status, stores the existing Firestore record, and mirrors the coordinate to `livePartnerLocations/{bookingId}` with the customer's UID. Customer app reads are owner-scoped by `database.rules.json`. Firestore remains the booking/history system of record; if RTDB is not configured or is unavailable, the map falls back to the existing authenticated API polling endpoint.
+
+Set the database URL copied from Firebase Console as `FIREBASE_DATABASE_URL` in Render's backend environment and as `sucharuRealtimeDatabaseUrl` in the Android project's local Gradle properties. The local Android URL is optional; without it the existing API polling path continues to work. Do not commit service-account credentials or Firebase Console secrets.
 
 ## Run locally
 

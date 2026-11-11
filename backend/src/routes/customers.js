@@ -4,6 +4,7 @@ const { all, collection, get, put, remove } = require("../config/store");
 const { requireCustomer } = require("../middleware/auth");
 const { SERVICE_AREAS, TIME_WINDOWS, isValidFutureLocalDate, normalizeBangladeshMobile } = require("../utils/rules");
 const { notifyCustomer, tokenId } = require("../services/customer-notifications");
+const { clearLivePartnerLocation } = require("../services/live-partner-location");
 const crypto = require("node:crypto");
 
 const router = express.Router();
@@ -14,6 +15,7 @@ function profile(customer) {
     name: customer.name,
     phone: customer.phone,
     email: customer.email || "",
+    profileImageUrl: customer.profileImageUrl || "",
     defaultAddress: customer.defaultAddress || null,
   };
 }
@@ -47,6 +49,19 @@ router.patch("/me", async (req, res, next) => {
       }
       update.email = email;
       identityChanged = identityChanged || email !== String(req.customer.email || "").trim().toLowerCase();
+    }
+    if (Object.prototype.hasOwnProperty.call(body, "profileImageUrl")) {
+      const imageUrl = String(body.profileImageUrl || "").trim();
+      const prefix = `customers/${req.customer._id}/profile/`;
+      let valid = false;
+      try {
+        const parsed = new URL(imageUrl);
+        valid = parsed.protocol === "https:" && parsed.hostname === "firebasestorage.googleapis.com"
+          && parsed.pathname.startsWith(`/v0/b/sucharu-87667.firebasestorage.app/o/${encodeURIComponent(prefix)}`)
+          && imageUrl.length <= 2048;
+      } catch {}
+      if (!valid) return res.status(400).json({ message: "Choose a profile photo uploaded to your Sucharu Storage folder." });
+      update.profileImageUrl = imageUrl;
     }
     const newPassword = String(body.newPassword || "");
     if (identityChanged || newPassword) {
@@ -241,6 +256,7 @@ router.post("/bookings/:bookingId/cancel", async (req, res, next) => {
     if (reason.length > 300) return res.status(400).json({ message: "Cancellation note must be 300 characters or less." });
     const updated = await put("bookings", booking._id, { status: "cancelled", cancellationReason: reason, cancelledBy: "customer", cancelledAt: new Date() }, true);
     await remove("bookingLocations", booking._id);
+    await clearLivePartnerLocation(booking.bookingId);
     await notifyCustomer({ customerId: booking.customerId, bookingId: booking.bookingId, type: "booking_cancelled", title: "Booking cancelled", body: `Your ${booking.service?.name || "service"} request has been cancelled.` });
     return res.json({ bookingId: updated.bookingId, status: updated.status, message: "Booking cancelled." });
   } catch (error) { next(error); }

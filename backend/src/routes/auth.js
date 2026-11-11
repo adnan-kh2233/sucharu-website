@@ -6,6 +6,7 @@ const { all, collection, db, emailId, get, put } = require("../config/store");
 const { normalizeBangladeshMobile } = require("../utils/rules");
 const { createCustomerCustomToken, getFirebaseAuth } = require("../config/firebase");
 const { isEmailDeliveryConfigured, sendCustomerPasswordResetCode } = require("../services/email");
+const { requireCustomer } = require("../middleware/auth");
 
 const router = express.Router();
 const WINDOW_MS = 15 * 60 * 1000, MAX_ATTEMPTS = 8;
@@ -84,6 +85,14 @@ router.post("/customer/login", async (req, res, next) => {
     const customer = (await all("customers")).find(c => c.active && (email ? normalizeEmail(c.email) === email : c.phone === phone));
     if (!customer || !await bcrypt.compare(password, customer.passwordHash || "")) { fail(req.ip); return res.status(401).json({ message: "Phone/email or password is incorrect." }); }
     attempts.delete(req.ip); await put("customers", customer._id, { lastLoginAt: new Date() }, true); return res.json(await customerSession(customer));
+  } catch (error) { next(error); }
+});
+
+// Exchange an authenticated Android customer API session for a Firebase Auth identity.
+// The shared website can continue using its current legacy customer token mode.
+router.post("/customer/firebase-session", requireCustomer, async (req, res, next) => {
+  try {
+    return res.json({ firebaseCustomToken: await createCustomerCustomToken(req.customer) });
   } catch (error) { next(error); }
 });
 

@@ -2,6 +2,7 @@ const { applicationDefault, cert, getApps, initializeApp } = require("firebase-a
 const { getAuth } = require("firebase-admin/auth");
 const { getFirestore } = require("firebase-admin/firestore");
 const { getMessaging } = require("firebase-admin/messaging");
+const { getDatabaseWithUrl } = require("firebase-admin/database");
 const fs = require("node:fs");
 
 const APP_NAME = "sucharu-firebase-admin";
@@ -39,9 +40,20 @@ function getFirebaseMessaging() {
   return getMessaging(getFirebaseApp());
 }
 
+function getRealtimeDatabase() {
+  const databaseUrl = String(process.env.FIREBASE_DATABASE_URL || "").trim();
+  if (!databaseUrl) return null;
+  return getDatabaseWithUrl(databaseUrl, getFirebaseApp());
+}
+
 async function createCustomerCustomToken(customer) {
   if (!customer?._id) throw new Error("A saved customer is required to create a Firebase session.");
   return getFirebaseAuth().createCustomToken(String(customer._id), { role: "customer" });
 }
 
-module.exports = { createCustomerCustomToken, getFirebaseAuth, getFirebaseMessaging, getFirestoreDb };
+async function createPartnerCustomToken(partner) {
+  if (!partner?._id) throw new Error("A saved partner is required to create a Firebase session.");
+  return getFirebaseAuth().createCustomToken(String(partner._id), { role: "partner" });
+}
+
+module.exports = { createCustomerCustomToken, createPartnerCustomToken, getFirebaseAuth, getFirebaseMessaging, getFirestoreDb, getRealtimeDatabase };
