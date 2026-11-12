@@ -14,6 +14,8 @@ services:
         value: production
       - key: FIREBASE_PROJECT_ID
         value: sucharu-87667
+      - key: FIREBASE_DATABASE_URL
+        value: https://sucharu-87667-default-rtdb.asia-southeast1.firebasedatabase.app/
       - key: GOOGLE_APPLICATION_CREDENTIALS
         value: /etc/secrets/firebase-admin.json
       - key: CUSTOMER_AUTH_MODE
