@@ -8,6 +8,7 @@ backend/secrets/
 **/node_modules/
 **/.DS_Store
 *.log
+dist/
 
 # This export is a local browser profile with cookies, history and login data
 Genji_Design/exports/render-profile/
