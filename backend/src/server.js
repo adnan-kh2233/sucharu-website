@@ -24,9 +24,10 @@ function createApp() {
   const app = express();
   const origins = String(process.env.CLIENT_URL || "http://127.0.0.1:5500,http://localhost:5500")
     .split(",").map(value => value.trim()).filter(Boolean);
+  const requiredOrigins = new Set(["https://sucharu-87667.web.app"]);
   app.disable("x-powered-by");
   app.use(cors({ origin(origin, callback) {
-    if (!origin || origins.includes(origin)) return callback(null, true);
+    if (!origin || origins.includes(origin) || requiredOrigins.has(origin)) return callback(null, true);
     return callback(new Error("Origin is not allowed by CORS."));
   }, methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"], allowedHeaders: ["Content-Type", "Authorization"], maxAge: 600 }));
   app.use(express.json({ limit: "512kb", strict: true }));
